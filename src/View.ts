@@ -8,7 +8,7 @@ import { ShaderLocationsVault } from "%COMMON/ShaderLocationsVault";
 import { Light } from "%COMMON/Light"
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { ScenegraphJSONImporter } from "./ScenegraphJSONImporter"
-import { Scene } from "./RayTracing"
+import { RayTraceScene } from "./RayTracing"
 
 
 
@@ -79,7 +79,7 @@ export class View {
 
   public initScenegraph(): Promise<void> {
 
-    let simpleScene = new Scene;
+    let simpleScene = new RayTraceScene;
 
     return new Promise<void>((resolve) => {
       ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSmallScene())
