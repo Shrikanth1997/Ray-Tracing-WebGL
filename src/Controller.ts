@@ -3,29 +3,52 @@ import { View } from "View"
 import { mat4 } from "gl-matrix"
 import { Material } from "%COMMON/Material"
 import { RTView } from "./RTView"
+import { Scenegraph } from "./Scenegraph";
+import { VertexPNT, VertexPNTProducer } from "./VertexPNT";
+import { ScenegraphJSONImporter } from "./ScenegraphJSONImporter"
+import { Scene } from "./RayTracing"
 
 export interface Features {
 }
 export class Controller implements Features {
     private view: View;
+    public raytracerView: RTView;
 
-    constructor(view: View) {
+    constructor(view: View, raytracerView: RTView) {
         this.view = view;
+        this.raytracerView = raytracerView;
         this.view.setFeatures(this);
     }
 
+    public initScenegraph(): Promise<void> {
+
+        let simpleScene = new Scene;
+    
+        return new Promise<void>((resolve) => {
+          ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere())
+            .then((s: Scenegraph<VertexPNT>) => {
+              this.raytracerView.scenegraph = s;
+              this.view.scenegraph = s;
+              resolve();
+            });
+        });
+      }
+
     public go(): void {
-        this.view.initScenegraph()
+        this.initScenegraph()
             .then(() => {
                 let numLights: number = this.view.getNumLights();
 
-                console.log("Num lights: " + numLights);
+                console.log("view_Scenegraph: " + this.view.scenegraph);
+                console.log(this.raytracerView.scenegraph);
+
                 if(numLights==0)
                     numLights = 2;
 
                 this.view.initShaders(this.getPhongVShader(), this.getPhongFShader(numLights));
                 this.view.initRenderer();
                 this.view.draw();
+                //this.raytracerView.scenegraph = this.view.scenegraph;
             });
     }
 
@@ -103,7 +126,7 @@ export class Controller implements Features {
             vec3 ambient,diffuse,specular;
             float nDotL,rDotV;
             vec4 result;
-        
+            vec4 result_dummy;
         
             result = vec4(0,0,0,1);
         `
@@ -138,7 +161,7 @@ export class Controller implements Features {
                     result = result + vec4(ambient+diffuse+specular,1.0);  
                 }  
             }
-            result = result * texture2D(image,fTexCoord.st);
+            result_dummy = result_dummy * texture2D(image,fTexCoord.st);
             gl_FragColor = result;
         }
         

@@ -5,6 +5,8 @@ import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { mat4 } from "gl-matrix";
 import { IVertexData } from "%COMMON/IVertexData";
+import { Ray3D } from "./RayTracing";
+
 
 /**
  * This node represents the leaf of a scene graph. It is the only type of node that has
@@ -78,5 +80,9 @@ export class LeafNode extends SGNode {
         }
     }
 
-
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit): void {
+        if (this.meshName.length > 0) {
+            context.intersectNode(this.meshName, modelView.peek(), isHit);
+        }
+    }
 }

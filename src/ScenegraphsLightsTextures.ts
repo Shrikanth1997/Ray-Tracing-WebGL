@@ -2,6 +2,8 @@ import { View } from "./View"
 import * as WebGLUtils from "%COMMON/WebGLUtils"
 import { Controller } from "./Controller";
 import { RTView } from "./RTView";
+import { Scenegraph } from "./Scenegraph";
+import { VertexPNT, VertexPNTProducer } from "./VertexPNT";
 
 var numFrames: number = 0;
 var lastTime: number = -1;
@@ -13,6 +15,7 @@ function main(): void {
     let gl: WebGLRenderingContext;
     let view: View;
     let controller: Controller;
+    let raytracerView: RTView;
 
     window.onload = ev => {
 
@@ -33,11 +36,11 @@ function main(): void {
         }
         console.log("Window loaded");
         view = new View(gl);
+        raytracerView = new RTView();
 
 
-        controller = new Controller(view);
+        controller = new Controller(view, raytracerView);
         controller.go();
-
         
 
         var tick = function () {
@@ -52,17 +55,20 @@ function main(): void {
                 document.getElementById('frameratedisplay').innerHTML = "Frame rate: " + frameRate.toFixed(1);
                 numFrames = 0;
             }
+
+            let scenegraphTest: Scenegraph<VertexPNT> = view.scenegraph;
+            //scenegraphTest = raytracerView.scenegraph;
             view.animate();
             view.draw();
 
-            let raytracerView: RTView = new RTView();
+            // Copy the scenegraph to RTView
+            //raytracerView.scenegraph = view.scenegraph;
+            raytracerView.rayTrace();
             raytracerView.fillCanvas();
             
             //this line sets up the animation
             requestAnimationFrame(tick);
         };
-
-        
 
         //call tick the first time
         tick();

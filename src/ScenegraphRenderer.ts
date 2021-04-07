@@ -9,6 +9,7 @@ import { mat4, vec4, glMatrix } from "gl-matrix";
 import { Material } from "%COMMON/Material";
 import { Light } from "%COMMON/Light";
 import { TextureObject } from "%COMMON/TextureObject"
+import { Ray3D } from "./RayTracing";
 
 /**
  * This is a scene graph renderer implementation that works specifically with WebGL.
@@ -90,6 +91,18 @@ export class ScenegraphRenderer {
         let lights: Light[] = root.getLights(modelView);
         this.sendLightsToShader(lights);
         root.draw(this, modelView);
+    }
+
+    public intersect(root: SGNode, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): void {
+        root.intersect(this, ray, modelView, isHit);
+    }
+
+    public intersectNode(meshName: string, transformation: mat4, isHit: boolean): void
+    {
+        if (this.meshRenderers.has(meshName)) {
+            console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
+            isHit = true;
+        }
     }
 
     private sendLightsToShader(lights: Light[]): void {

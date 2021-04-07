@@ -5,6 +5,8 @@ import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Light } from "%COMMON/Light";
+import { Ray3D } from "./RayTracing";
+
 
 /**
  * This node represents a transformation in the scene graph. It has only one child. The 
@@ -130,6 +132,16 @@ export class TransformNode extends SGNode {
 
         if (this.child != null)
             this.child.draw(context, modelView);
+        modelView.pop();
+    }
+
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean) {
+        modelView.push(mat4.clone(modelView.peek()));
+        mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
+        mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
+
+        if (this.child != null)
+            this.child.intersect(context, ray, modelView, isHit);
         modelView.pop();
     }
 

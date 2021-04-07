@@ -1,17 +1,20 @@
-import { vec3 } from "gl-matrix";
+import { vec3, mat4, vec4, glMatrix } from "gl-matrix";
+import { Stack } from "%COMMON/Stack"
 import * as WebGLUtils from "%COMMON/WebGLUtils";
+import { Light } from "%COMMON/Light"
 import { Material } from "%COMMON/Material";
 import { TextureObject } from "%COMMON/TextureObject";
+import { ShaderLocationsVault } from "%COMMON/ShaderLocationsVault";
 
 export class Ray3D{
 
     // Starting point
-    public position: vec3;
+    public position: vec4;
 
     //Vector direction of the ray
-    public direction: vec3;
+    public direction: vec4;
 
-    constructor(position: vec3, direction: vec3){
+    constructor(position: vec4, direction: vec4){
         this.position = position;
         this.direction = direction;
     }
@@ -20,11 +23,11 @@ export class Ray3D{
 
 export class HitRecord{
 
-    private hitTime: number;
-    private intersection: vec3;
-    private normalHit: vec3;
-    private material: Material;
-    private tex: TextureObject;
+    public hitTime: number;
+    public intersection: vec3;
+    public normalHit: vec3;
+    public material: Material;
+    public tex: TextureObject;
 
     constructor(hitTime: number, intersection: vec3, normalHit: vec3, material: Material, tex: TextureObject){
         this.hitTime = hitTime;
@@ -37,6 +40,135 @@ export class HitRecord{
 }
 
 export class Scene{
+
+
+    public createSphere(): string{
+
+        return `
+        {
+        "instances": [
+            {
+            "name": "sphere",
+            "path": "models/sphere.obj"
+            },
+            {
+            "name": "box",
+            "path": "models/box.obj"
+            },
+            {
+            "name": "cylinder",
+            "path": "models/cylinder.obj"
+            },
+            {
+            "name": "cone",
+            "path": "models/cone.obj"
+            }
+        ],
+        "images": [
+            {
+            "name": "white",
+            "path": "textures/white.png"
+            }
+        ],
+        "root": {
+            "type": "group",
+            "name": "Root of scene graph",
+            "lights": [
+              {
+                "ambient": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "diffuse": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "specular": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "position": [
+                  0.0,
+                  100.0,
+                  0.0,
+                  1.0
+                ],
+                "spotdirection": [
+                  0.0,
+                  -1.0,
+                  0.0,
+                  0.0
+                ],
+                "spotcutoff": 25.0
+              }
+            ],
+
+            "children": [
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              0.0,
+                              0.0,
+                              0.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                20.0,
+                                20.0,
+                                20.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "sphere",
+                        "material": {
+                            "ambient": [
+                                0.4,
+                                0.2,
+                                0.6,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                }
+            ]
+        }
+    }
+
+
+    `;
+
+    }
 
     
     public createSmallScene(): string{

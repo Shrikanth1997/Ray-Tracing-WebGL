@@ -40,11 +40,11 @@ function main(): void {
     //this.view.init(vShaderSource, fShaderSource);
 
     //draw the view. You must call draw *each time* you would like to draw the screen (i.e. there is no auto refresh)
-    view.draw();
+    //view.draw();
 
     //set up the ray tracer view
     let raytracerView: RTView = new RTView();
-    raytracerView.fillCanvas();
+    //raytracerView.fillCanvas();
 
 }
 

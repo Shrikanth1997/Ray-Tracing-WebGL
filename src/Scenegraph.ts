@@ -5,6 +5,9 @@ import { ScenegraphRenderer } from "ScenegraphRenderer";
 import { mat4, glMatrix, vec3 } from "gl-matrix";
 import { Stack } from "%COMMON/Stack";
 import { Light } from "%COMMON/Light";
+import { Controller } from "./Controller";
+import { Ray3D } from "./RayTracing";
+
 export class Scenegraph<VertexType extends IVertexData> {
     /**
      * The root of the scene graph tree
@@ -91,6 +94,15 @@ export class Scenegraph<VertexType extends IVertexData> {
             this.renderer.draw(this.root, modelView);
         }
     }
+
+    public intersect(ray: Ray3D, modelView: Stack<mat4>): boolean {
+        let isHit: boolean = false;
+        if ((this.root != null) && (this.renderer != null)) {
+            this.renderer.intersect(this.root, ray, modelView, isHit);
+        }
+        return isHit;
+    }
+
 
     public addPolygonMesh(meshName: string, mesh: Mesh.PolygonMesh<VertexType>): void {
         this.meshes.set(meshName, mesh);

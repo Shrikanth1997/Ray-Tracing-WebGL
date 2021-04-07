@@ -30,7 +30,7 @@ export class View {
   //a modelview matrix, that encapsulates all the transformations applied to our object
   private modelview: Stack<mat4>;
 
-  private scenegraph: Scenegraph<VertexPNT>;
+  public scenegraph: Scenegraph<VertexPNT>;
   private shaderLocations: ShaderLocationsVault;
 
   private time: number;
@@ -77,18 +77,18 @@ export class View {
     this.scenegraph.setRenderer(renderer);
   }
 
-  public initScenegraph(): Promise<void> {
+  /*public initScenegraph(): Promise<void> {
 
     let simpleScene = new Scene;
 
     return new Promise<void>((resolve) => {
-      ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSmallScene())
+      ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere())
         .then((s: Scenegraph<VertexPNT>) => {
           this.scenegraph = s;
           resolve();
         });
     });
-  }
+  }*/
 
   private face(): string {
     return `
@@ -1643,13 +1643,17 @@ export class View {
      */
     this.modelview.push(mat4.create());
     this.modelview.push(mat4.clone(this.modelview.peek()));
-    mat4.lookAt(this.modelview.peek(), vec3.fromValues(0, 40, 100), vec3.fromValues(0, 0, 0), vec3.fromValues(0, 1, 0));
+    mat4.lookAt(this.modelview.peek(), vec3.fromValues(0, 0, -50), vec3.fromValues(0, 0, 0), vec3.fromValues(0, 1, 0));
 
 
     this.gl.uniformMatrix4fv(this.shaderLocations.getUniformLocation("projection"), false, this.proj);
 
 
-
+    if(this.scenegraph == null)
+    {
+      console.log("view scenegraph is null");
+    }
+    
     this.scenegraph.draw(this.modelview);
   }
 
