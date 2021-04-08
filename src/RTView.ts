@@ -10,9 +10,11 @@ export class RTView {
     private width: number;
     private height: number;
 
+    public check: number;
+
     public scenegraph: Scenegraph<VertexPNT>;
 
-    constructor() {
+    constructor(check: number) {
         this.canvas = <HTMLCanvasElement>document.querySelector("#raytraceCanvas");
         if (!this.canvas) {
             console.log("Failed to retrieve the <canvas> element");
@@ -25,6 +27,9 @@ export class RTView {
 
         this.width = Number(this.canvas.getAttribute("width"));
         this.height = Number(this.canvas.getAttribute("height"));
+
+
+        this.check = check;
 
         this.scenegraph = null;
     }
@@ -67,10 +72,13 @@ export class RTView {
         let eye: vec3 = vec3.fromValues(0, 0, -50);
         mat4.lookAt(this.modelview.peek(), eye, vec3.fromValues(0, 0, 0), vec3.fromValues(0, 1, 0));
 
+        let H: number = this.height;
+        let W: number = this.width;
+
         let focalLen: number = 1;
         let origin: vec4 = vec4.fromValues(0, 0, 0, 1);
         // Loop over all the pixels
-        for(let j: number = this.height-1; j >= 0; j++)
+        /*for(let j: number = this.height-1; j >= 0; j++)
         {
             for(let i: number = 0; i < this.width; i++)
             {
@@ -82,7 +90,22 @@ export class RTView {
                 let ray: Ray3D = new Ray3D(origin, dir);
                 let color: vec3 = this.rayCast(ray, this.modelview);
             }
+        }*/
+
+        if(this.scenegraph != null)
+        {
+            for(let x: number =0;x<=W/2;x=x+1){
+                for(let y: number=0;y<=H/2;y=y+1){
+                    let Sv: vec4 = [0,0,0,1];
+                    let V: vec4 = [x-W/2, y-H/2, (-H/2)/Math.tan(glMatrix.toRadian(30)),1];
+                    let ray: Ray3D = new Ray3D(Sv, V);
+
+                    let color: vec3 = this.rayCast(ray, this.modelview);
+                    console.log("COLOR: " + color);
+                }
+            }
         }
+        
     }
 
     public rayCast(ray: Ray3D, modelView: Stack<mat4>): vec3
@@ -90,21 +113,27 @@ export class RTView {
         let ifHit: boolean;
         let rayHit: HitRecord;
 
-        if(this.scenegraph == null)
+        
+        console.log("Reached cast " + this.scenegraph);
+        /*if(this.scenegraph == null)
         {
             console.log("RTView scenegraph is null");
         }
         else
         {
             console.log("RTView scenegraph is not null");
-        }
+        }*/
 
-        //if(this.scenegraph != null)
+        if(this.scenegraph != null)
         {
-            //console.log("RTView scenegraph is not null");
-            //if(this.scenegraph.intersect(ray, modelView))
+            console.log("RTView scenegraph is not null " + this.scenegraph.intersect(ray, modelView));
+            if(this.scenegraph.intersect(ray, modelView)==true)
             {
-                //console.log("hit");
+                console.log("hit");
+                return [1,1,1];
+            }
+            else{
+                console.log("NO hit");
             }
         }
 

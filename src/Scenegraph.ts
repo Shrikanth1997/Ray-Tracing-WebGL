@@ -96,11 +96,11 @@ export class Scenegraph<VertexType extends IVertexData> {
     }
 
     public intersect(ray: Ray3D, modelView: Stack<mat4>): boolean {
-        let isHit: boolean = false;
+        let isHit1: boolean;
         if ((this.root != null) && (this.renderer != null)) {
-            this.renderer.intersect(this.root, ray, modelView, isHit);
+            isHit1 = this.renderer.intersect(this.root, ray, modelView, false);
         }
-        return isHit;
+        return isHit1;
     }
 
 

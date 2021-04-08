@@ -65,8 +65,11 @@ export class GroupNode extends SGNode {
         this.children.forEach(child => child.draw(context, modelView));
     }
 
-    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): void {
-        this.children.forEach(child => child.intersect(context, ray, modelView, isHit));
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
+        let hits: boolean;
+        this.children.forEach(child => hits = child.intersect(context, ray, modelView, isHit));
+
+        return hits;
     }
 
     /**

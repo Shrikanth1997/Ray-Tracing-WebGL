@@ -1,9 +1,9 @@
-import { SGNode } from "./SGNode"
+import { SGNode } from "./SGNode";
+import { vec4, mat4, vec3, glMatrix } from "gl-matrix";
 import { Scenegraph } from "./Scenegraph";
 import { Material } from "%COMMON/Material";
 import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
-import { mat4 } from "gl-matrix";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Ray3D } from "./RayTracing";
 
@@ -13,6 +13,19 @@ import { Ray3D } from "./RayTracing";
  * actual geometry to render.
  * @author Amit Shesh
  */
+
+export class TransformationInfo {
+
+    public center: vec3;
+    public radius: number;
+
+    public constructor(){
+        this.center = [0,0,0];
+        this.radius = 0;
+    }
+
+}
+
 
 export class LeafNode extends SGNode {
 
@@ -28,12 +41,22 @@ export class LeafNode extends SGNode {
 
     protected textureName: string;
 
+    private LeafTransformInfo: TransformationInfo;
+
     public constructor(instanceOf: string, graph: Scenegraph<IVertexData>, name: string) {
         super(graph, name);
         this.meshName = instanceOf;
+
+        this.LeafTransformInfo = new TransformationInfo;
     }
 
 
+    public setTransformInfo(center: vec3, radius: vec3){
+
+        this.LeafTransformInfo.center = center;
+        this.LeafTransformInfo.radius = (radius[0]+radius[1]+radius[2]) / 3;
+
+    }
 
     /*
 	 *Set the material of each vertex in this object
@@ -80,9 +103,12 @@ export class LeafNode extends SGNode {
         }
     }
 
-    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit): void {
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
+        console.log("Check if transform is correct " + this.LeafTransformInfo.center + ", " + this.LeafTransformInfo.radius);
         if (this.meshName.length > 0) {
-            context.intersectNode(this.meshName, modelView.peek(), isHit);
+            isHit = context.intersectNode(this.meshName, modelView.peek(), isHit);
         }
+        console.log("Check HIT: " + isHit);
+        return isHit;
     }
 }

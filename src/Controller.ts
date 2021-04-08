@@ -27,6 +27,7 @@ export class Controller implements Features {
         return new Promise<void>((resolve) => {
           ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere())
             .then((s: Scenegraph<VertexPNT>) => {
+              this.raytracerView.check = 10;
               this.raytracerView.scenegraph = s;
               this.view.scenegraph = s;
               resolve();
@@ -34,13 +35,13 @@ export class Controller implements Features {
         });
       }
 
-    public go(): void {
+    public go(): RTView {
         this.initScenegraph()
             .then(() => {
                 let numLights: number = this.view.getNumLights();
 
                 console.log("view_Scenegraph: " + this.view.scenegraph);
-                console.log(this.raytracerView.scenegraph);
+                console.log("Check if rt works " + this.raytracerView.scenegraph);
 
                 if(numLights==0)
                     numLights = 2;
@@ -50,6 +51,8 @@ export class Controller implements Features {
                 this.view.draw();
                 //this.raytracerView.scenegraph = this.view.scenegraph;
             });
+
+            return this.raytracerView;
     }
 
     public getPhongVShader(): string {

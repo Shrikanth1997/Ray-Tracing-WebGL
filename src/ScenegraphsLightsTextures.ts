@@ -36,12 +36,12 @@ function main(): void {
         }
         console.log("Window loaded");
         view = new View(gl);
-        raytracerView = new RTView();
-
+        raytracerView = new RTView(5);
 
         controller = new Controller(view, raytracerView);
-        controller.go();
+        raytracerView = controller.go();
         
+        console.log("First time scene " + raytracerView.scenegraph);
 
         var tick = function () {
             if (lastTime == -1) {

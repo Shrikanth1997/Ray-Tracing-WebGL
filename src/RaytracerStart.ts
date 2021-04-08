@@ -43,7 +43,7 @@ function main(): void {
     //view.draw();
 
     //set up the ray tracer view
-    let raytracerView: RTView = new RTView();
+    let raytracerView: RTView = new RTView(15);
     //raytracerView.fillCanvas();
 
 }

@@ -93,16 +93,18 @@ export class ScenegraphRenderer {
         root.draw(this, modelView);
     }
 
-    public intersect(root: SGNode, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): void {
-        root.intersect(this, ray, modelView, isHit);
+    public intersect(root: SGNode, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
+        isHit = root.intersect(this, ray, modelView, isHit);
+        return isHit;
     }
 
-    public intersectNode(meshName: string, transformation: mat4, isHit: boolean): void
+    public intersectNode(meshName: string, transformation: mat4, isHit: boolean): boolean
     {
         if (this.meshRenderers.has(meshName)) {
             console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
             isHit = true;
         }
+        return isHit;
     }
 
     private sendLightsToShader(lights: Light[]): void {

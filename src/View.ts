@@ -9,7 +9,7 @@ import { Light } from "%COMMON/Light"
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { ScenegraphJSONImporter } from "./ScenegraphJSONImporter"
 import { Scene } from "./RayTracing"
-
+import { RTView } from "./RTView"
 
 
 
@@ -35,6 +35,8 @@ export class View {
 
   private time: number;
 
+  public raytracerView: RTView;
+
   constructor(gl: WebGLRenderingContext) {
     this.gl = gl;
     this.time = 0;
@@ -43,6 +45,7 @@ export class View {
     //set the clear color
     this.gl.clearColor(0.9, 0.9, 0.7, 1);
 
+    this.raytracerView = new RTView(20);
 
     //Our quad is in the range (-100,100) in X and Y, in the "virtual world" that we are drawing. We must specify what part of this virtual world must be drawn. We do this via a projection matrix, set up as below. In this case, we are going to render the part of the virtual world that is inside a square from (-200,-200) to (200,200). Since we are drawing only 2D, the last two arguments are not useful. The default Z-value chosen is 0, which means we only specify the last two numbers such that 0 is within their range (in this case we have specified them as (-100,100))
     //this.proj = mat4.ortho(mat4.create(), -60, 60, -100, 100, 0.1, 10000);
@@ -1612,6 +1615,21 @@ export class View {
             }
         }
         `;
+  }
+
+  public initScenegraph(): Promise<void> {
+
+    let simpleScene = new Scene;
+
+    return new Promise<void>((resolve) => {
+      ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere())
+        .then((s: Scenegraph<VertexPNT>) => {
+          this.raytracerView.check = 10;
+          this.raytracerView.scenegraph = s;
+          this.scenegraph = s;
+          resolve();
+        });
+    });
   }
 
   public animate(): void {

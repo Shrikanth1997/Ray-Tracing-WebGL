@@ -135,14 +135,16 @@ export class TransformNode extends SGNode {
         modelView.pop();
     }
 
-    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean) {
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
         modelView.push(mat4.clone(modelView.peek()));
         mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
         mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
 
         if (this.child != null)
-            this.child.intersect(context, ray, modelView, isHit);
+            isHit = this.child.intersect(context, ray, modelView, isHit);
         modelView.pop();
+
+        return isHit;
     }
 
 

@@ -11,7 +11,8 @@ import { Material } from "%COMMON/Material";
 import { Light } from "%COMMON/Light";
 
 export namespace ScenegraphJSONImporter {
-
+    let translateBy: vec3;
+    let scaleBy: vec3;
     /**
      * This function parses a scenegraph specified in JSON format, and produces a scene graph
      * @param producer the vertex producer to load all the meshes used in the scene graph
@@ -53,6 +54,10 @@ export namespace ScenegraphJSONImporter {
 
     }
 
+    export function getTransformInfo(center: vec3, radius: vec3): [vec3, vec3] {
+        return [center, radius];
+    }
+
     export function handleNode<VertexType extends IVertexData>(scenegraph: Scenegraph<VertexType>, obj: Object): SGNode {
         let result: SGNode = null;
         if (!("type" in obj)) {
@@ -84,6 +89,7 @@ export namespace ScenegraphJSONImporter {
         let result: TransformNode;
         let nodeName: string = "t";
         let transform: mat4 = mat4.create();
+        
 
         if ("name" in obj) {
             nodeName = obj["name"];
@@ -104,7 +110,7 @@ export namespace ScenegraphJSONImporter {
                 if (values.length != 3) {
                     throw new Error("3 values needed for translate")
                 }
-                let translateBy: vec3 = vec3.fromValues(values[0], values[1], values[2]);
+                translateBy = vec3.fromValues(values[0], values[1], values[2]);
                 mat4.translate(transform, transform, translateBy);
             }
             else if ("scale" in op) {
@@ -112,7 +118,7 @@ export namespace ScenegraphJSONImporter {
                 if (values.length != 3) {
                     throw new Error("3 values needed for scale")
                 }
-                let scaleBy: vec3 = vec3.fromValues(values[0], values[1], values[2]);
+                scaleBy = vec3.fromValues(values[0], values[1], values[2]);
                 mat4.scale(transform, transform, scaleBy);
             }
             else if ("rotate" in op) {
@@ -125,6 +131,8 @@ export namespace ScenegraphJSONImporter {
                 mat4.rotate(transform, transform, glMatrix.toRadian(rotateAngle), rotateAxis);
             }
         }
+
+
         result.addChild(handleNode(scenegraph, obj["child"]));
         result.setTransform(transform);
 
@@ -312,6 +320,7 @@ export namespace ScenegraphJSONImporter {
             material = handleMaterial(obj["material"]);
         }
 
+        result.setTransformInfo(translateBy, scaleBy);
         result.setMaterial(material);
 
         if ("texture" in obj) {
@@ -321,6 +330,9 @@ export namespace ScenegraphJSONImporter {
         else {
             result.setTextureName("white");
         }
+
+
+
 
         if ("lights" in obj) {
             for (let op of (Object)(obj["lights"])) {

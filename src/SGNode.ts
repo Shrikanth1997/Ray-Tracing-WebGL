@@ -118,7 +118,7 @@ export abstract class SGNode {
     }
 
     public abstract draw(context: ScenegraphRenderer, modelView: Stack<mat4>): void;
-    public abstract intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): void;
+    public abstract intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean;
     public abstract clone(): SGNode;
     public setTransform(transform: mat4): void {
         throw new Error("Not supported");
