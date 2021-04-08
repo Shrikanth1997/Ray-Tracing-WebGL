@@ -101,6 +101,15 @@ define(["require", "exports", "./SGNode", "gl-matrix"], function (require, expor
                 this.child.draw(context, modelView);
             modelView.pop();
         }
+        intersect(context, ray, modelView, isHit) {
+            modelView.push(gl_matrix_1.mat4.clone(modelView.peek()));
+            gl_matrix_1.mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
+            gl_matrix_1.mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
+            if (this.child != null)
+                isHit = this.child.intersect(context, ray, modelView, isHit);
+            modelView.pop();
+            return isHit;
+        }
         /**
          * Sets the animation transform of this node
          * @param mat the animation transform of this node

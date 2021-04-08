@@ -54,6 +54,34 @@ define(["require", "exports", "%COMMON/RenderableMesh", "gl-matrix", "%COMMON/Te
             this.sendLightsToShader(lights);
             root.draw(this, modelView);
         }
+        intersect(root, ray, modelView, isHit) {
+            isHit = root.intersect(this, ray, modelView, isHit);
+            return isHit;
+        }
+        hit_sphere(center, radius, r) {
+            let oc = center;
+            let a = gl_matrix_1.vec4.dot(r.direction, r.direction);
+            let b = 2.0 * gl_matrix_1.vec4.dot(oc, r.direction);
+            let c = gl_matrix_1.vec4.dot(oc, oc) - radius * radius;
+            let discriminant = b * b - 4 * a * c;
+            if (discriminant < 0) {
+                return -1.0;
+            }
+            else {
+                return (-b - Math.sqrt(discriminant)) / (2.0 * a);
+            }
+        }
+        intersectNode(meshName, ray, transformation, isHit, info) {
+            if (this.meshRenderers.has(meshName)) {
+                console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
+                let objectType = this.meshRenderers.get(meshName).getName();
+                if (objectType == "sphere") {
+                    console.log("QAUDRATIC: " + this.hit_sphere([info.center[0], info.center[1], info.center[2], 1], info.radius, ray));
+                }
+                isHit = true;
+            }
+            return isHit;
+        }
         sendLightsToShader(lights) {
             //send all the light colors
             for (let i = 0; i < lights.length; i++) {

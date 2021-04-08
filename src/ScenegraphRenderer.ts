@@ -4,8 +4,9 @@ import { IVertexData } from "%COMMON/IVertexData";
 import { Mesh } from "%COMMON/PolygonMesh"
 import * as WebGLUtils from "%COMMON/WebGLUtils"
 import { SGNode } from "SGNode";
+import { TransformationInfo } from "./LeafNode"
 import { Stack } from "%COMMON/Stack";
-import { mat4, vec4, glMatrix } from "gl-matrix";
+import { mat4, vec3, vec4, glMatrix } from "gl-matrix";
 import { Material } from "%COMMON/Material";
 import { Light } from "%COMMON/Light";
 import { TextureObject } from "%COMMON/TextureObject"
@@ -98,10 +99,33 @@ export class ScenegraphRenderer {
         return isHit;
     }
 
-    public intersectNode(meshName: string, transformation: mat4, isHit: boolean): boolean
+
+    public hit_sphere(center: vec4, radius: number,r: Ray3D): number {
+        let oc: vec4 = center;
+        let a: number = vec4.dot(r.direction, r.direction);
+        let b: number = 2.0 * vec4.dot(oc, r.direction);
+        let c: number = vec4.dot(oc, oc) - radius*radius;
+        let discriminant: number = b*b - 4*a*c;
+
+        if (discriminant < 0) {
+            return -1.0;
+        } else {
+            return (-b - Math.sqrt(discriminant) ) / (2.0*a);
+        }
+    }
+
+    public intersectNode(meshName: string, ray:Ray3D, transformation: mat4, isHit: boolean, info: TransformationInfo): boolean
     {
         if (this.meshRenderers.has(meshName)) {
             console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
+
+            let objectType: string = this.meshRenderers.get(meshName).getName();
+
+            if(objectType == "sphere"){
+                console.log("QAUDRATIC: " + this.hit_sphere([info.center[0],info.center[1],info.center[2],1], info.radius, ray));
+            }
+
+
             isHit = true;
         }
         return isHit;

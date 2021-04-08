@@ -47,6 +47,11 @@ define(["require", "exports", "./SGNode"], function (require, exports, SGNode_1)
         draw(context, modelView) {
             this.children.forEach(child => child.draw(context, modelView));
         }
+        intersect(context, ray, modelView, isHit) {
+            let hits;
+            this.children.forEach(child => hits = child.intersect(context, ray, modelView, isHit));
+            return hits;
+        }
         /**
          * Makes a deep copy of the subtree rooted at this node
          * @return a deep copy of the subtree rooted at this node

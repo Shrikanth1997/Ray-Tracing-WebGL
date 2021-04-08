@@ -7722,26 +7722,42 @@ var forEach = function () {
   \***************************/
 /***/ ((module, exports, __webpack_require__) => {
 
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports) {
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! ./VertexPNT */ "./src/VertexPNT.ts"), __webpack_require__(/*! ./ScenegraphJSONImporter */ "./src/ScenegraphJSONImporter.ts"), __webpack_require__(/*! ./RayTracing */ "./src/RayTracing.ts")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, VertexPNT_1, ScenegraphJSONImporter_1, RayTracing_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", ({ value: true }));
     exports.Controller = void 0;
     class Controller {
-        constructor(view) {
+        constructor(view, raytracerView) {
             this.view = view;
+            this.raytracerView = raytracerView;
             this.view.setFeatures(this);
         }
+        initScenegraph() {
+            let simpleScene = new RayTracing_1.Scene;
+            return new Promise((resolve) => {
+                ScenegraphJSONImporter_1.ScenegraphJSONImporter.importJSON(new VertexPNT_1.VertexPNTProducer(), simpleScene.createSphere())
+                    .then((s) => {
+                    this.raytracerView.check = 10;
+                    this.raytracerView.scenegraph = s;
+                    this.view.scenegraph = s;
+                    resolve();
+                });
+            });
+        }
         go() {
-            this.view.initScenegraph()
+            this.initScenegraph()
                 .then(() => {
                 let numLights = this.view.getNumLights();
-                console.log("Num lights: " + numLights);
+                console.log("view_Scenegraph: " + this.view.scenegraph);
+                console.log("Check if rt works " + this.raytracerView.scenegraph);
                 if (numLights == 0)
                     numLights = 2;
                 this.view.initShaders(this.getPhongVShader(), this.getPhongFShader(numLights));
                 this.view.initRenderer();
                 this.view.draw();
+                //this.raytracerView.scenegraph = this.view.scenegraph;
             });
+            return this.raytracerView;
         }
         getPhongVShader() {
             return `
@@ -7816,7 +7832,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             vec3 ambient,diffuse,specular;
             float nDotL,rDotV;
             vec4 result;
-        
+            vec4 result_dummy;
         
             result = vec4(0,0,0,1);
         `
@@ -7851,7 +7867,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                     result = result + vec4(ambient+diffuse+specular,1.0);  
                 }  
             }
-            result = result * texture2D(image,fTexCoord.st);
+            result_dummy = result_dummy * texture2D(image,fTexCoord.st);
             gl_FragColor = result;
         }
         
@@ -7920,6 +7936,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         draw(context, modelView) {
             this.children.forEach(child => child.draw(context, modelView));
         }
+        intersect(context, ray, modelView, isHit) {
+            let hits;
+            this.children.forEach(child => hits = child.intersect(context, ray, modelView, isHit));
+            return hits;
+        }
         /**
          * Makes a deep copy of the subtree rooted at this node
          * @return a deep copy of the subtree rooted at this node
@@ -7984,16 +8005,28 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! ./SGNode */ "./src/SGNode.ts")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, SGNode_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", ({ value: true }));
-    exports.LeafNode = void 0;
+    exports.LeafNode = exports.TransformationInfo = void 0;
     /**
      * This node represents the leaf of a scene graph. It is the only type of node that has
      * actual geometry to render.
      * @author Amit Shesh
      */
+    class TransformationInfo {
+        constructor() {
+            this.center = [0, 0, 0];
+            this.radius = 0;
+        }
+    }
+    exports.TransformationInfo = TransformationInfo;
     class LeafNode extends SGNode_1.SGNode {
         constructor(instanceOf, graph, name) {
             super(graph, name);
             this.meshName = instanceOf;
+            this.LeafTransformInfo = new TransformationInfo;
+        }
+        setTransformInfo(center, radius) {
+            this.LeafTransformInfo.center = center;
+            this.LeafTransformInfo.radius = (radius[0] + radius[1] + radius[2]) / 3;
         }
         /*
          *Set the material of each vertex in this object
@@ -8034,6 +8067,14 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                 context.drawMesh(this.meshName, this.material, this.textureName, modelView.peek());
             }
         }
+        intersect(context, ray, modelView, isHit) {
+            console.log("Check if transform is correct " + this.LeafTransformInfo.center + ", " + this.LeafTransformInfo.radius);
+            if (this.meshName.length > 0) {
+                isHit = context.intersectNode(this.meshName, ray, modelView.peek(), isHit, this.LeafTransformInfo);
+            }
+            console.log("Check HIT: " + isHit);
+            return isHit;
+        }
     }
     exports.LeafNode = LeafNode;
 }).apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__),
@@ -8048,12 +8089,12 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
   \***********************/
 /***/ ((module, exports, __webpack_require__) => {
 
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports) {
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! %COMMON/Stack */ "../common/Stack.ts"), __webpack_require__(/*! gl-matrix */ "../../../../../../../AppData/Roaming/npm/node_modules/gl-matrix/esm/index.js"), __webpack_require__(/*! ./RayTracing */ "./src/RayTracing.ts")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, Stack_1, gl_matrix_1, RayTracing_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", ({ value: true }));
     exports.RTView = void 0;
     class RTView {
-        constructor() {
+        constructor(check) {
             this.canvas = document.querySelector("#raytraceCanvas");
             if (!this.canvas) {
                 console.log("Failed to retrieve the <canvas> element");
@@ -8062,6 +8103,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             //button clicks
             let button = document.querySelector("#savebutton");
             button.addEventListener("click", ev => this.saveCanvas());
+            this.modelview = new Stack_1.Stack();
+            this.width = Number(this.canvas.getAttribute("width"));
+            this.height = Number(this.canvas.getAttribute("height"));
+            this.check = check;
+            this.scenegraph = null;
         }
         saveCanvas() {
             let link = document.createElement('a');
@@ -8075,16 +8121,78 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             let imageData = this.canvas.getContext('2d').createImageData(width, height);
             for (let i = 0; i < height; i++) {
                 for (let j = 0; j < width; j++) {
-                    imageData.data[4 * (i * width + j)] = Math.random() * 255;
-                    imageData.data[4 * (i * width + j) + 1] = Math.random() * 255;
-                    imageData.data[4 * (i * width + j) + 2] = Math.random() * 255;
+                    imageData.data[4 * (i * width + j)] = 0; //Math.random() * 255;
+                    imageData.data[4 * (i * width + j) + 1] = 0; //Math.random() * 255;
+                    imageData.data[4 * (i * width + j) + 2] = 255; //Math.random() * 255;
                     imageData.data[4 * (i * width + j) + 3] = 255;
                 }
             }
             this.canvas.getContext('2d').putImageData(imageData, 0, 0);
             let context = this.canvas.getContext('2d');
             context.fillStyle = 'red';
-            context.fillRect(100, 100, 200, 100);
+            //context.fillRect(100, 100, 400, 400);
+        }
+        rayTrace() {
+            // modelView matrix
+            while (!this.modelview.isEmpty())
+                this.modelview.pop();
+            this.modelview.push(gl_matrix_1.mat4.create());
+            this.modelview.push(gl_matrix_1.mat4.clone(this.modelview.peek()));
+            let eye = gl_matrix_1.vec3.fromValues(0, 0, -50);
+            gl_matrix_1.mat4.lookAt(this.modelview.peek(), eye, gl_matrix_1.vec3.fromValues(0, 0, 0), gl_matrix_1.vec3.fromValues(0, 1, 0));
+            let H = this.height;
+            let W = this.width;
+            let focalLen = 1;
+            let origin = gl_matrix_1.vec4.fromValues(0, 0, 0, 1);
+            // Loop over all the pixels
+            /*for(let j: number = this.height-1; j >= 0; j++)
+            {
+                for(let i: number = 0; i < this.width; i++)
+                {
+                   
+                    let x: number = (i / (this.width - 1)) * this.width;
+                    let y: number = (j / (this.height - 1)) * this.height;
+                    let dir: vec4 = vec4.fromValues((x - this.width/2), (y - this.height/2), -focalLen, 0);
+                    
+                    let ray: Ray3D = new Ray3D(origin, dir);
+                    let color: vec3 = this.rayCast(ray, this.modelview);
+                }
+            }*/
+            if (this.scenegraph != null) {
+                for (let x = 0; x <= W / 2; x = x + 1) {
+                    for (let y = 0; y <= H / 2; y = y + 1) {
+                        let Sv = [0, 0, 0, 1];
+                        let V = [x - W / 2, y - H / 2, (-H / 2) / Math.tan(gl_matrix_1.glMatrix.toRadian(30)), 1];
+                        let ray = new RayTracing_1.Ray3D(Sv, V);
+                        let color = this.rayCast(ray, this.modelview);
+                        console.log("COLOR: " + color);
+                    }
+                }
+            }
+        }
+        rayCast(ray, modelView) {
+            let ifHit;
+            let rayHit;
+            console.log("Reached cast " + this.scenegraph);
+            /*if(this.scenegraph == null)
+            {
+                console.log("RTView scenegraph is null");
+            }
+            else
+            {
+                console.log("RTView scenegraph is not null");
+            }*/
+            if (this.scenegraph != null) {
+                console.log("RTView scenegraph is not null " + this.scenegraph.intersect(ray, modelView));
+                if (this.scenegraph.intersect(ray, modelView) == true) {
+                    console.log("hit");
+                    return [1, 1, 1];
+                }
+                else {
+                    console.log("NO hit");
+                }
+            }
+            return [0, 0, 0];
         }
     }
     exports.RTView = RTView;
@@ -8122,6 +8230,131 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
     }
     exports.HitRecord = HitRecord;
     class Scene {
+        createSphere() {
+            return `
+        {
+        "instances": [
+            {
+            "name": "sphere",
+            "path": "models/sphere.obj"
+            },
+            {
+            "name": "box",
+            "path": "models/box.obj"
+            },
+            {
+            "name": "cylinder",
+            "path": "models/cylinder.obj"
+            },
+            {
+            "name": "cone",
+            "path": "models/cone.obj"
+            }
+        ],
+        "images": [
+            {
+            "name": "white",
+            "path": "textures/white.png"
+            }
+        ],
+        "root": {
+            "type": "group",
+            "name": "Root of scene graph",
+            "lights": [
+              {
+                "ambient": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "diffuse": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "specular": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "position": [
+                  0.0,
+                  100.0,
+                  0.0,
+                  1.0
+                ],
+                "spotdirection": [
+                  0.0,
+                  -1.0,
+                  0.0,
+                  0.0
+                ],
+                "spotcutoff": 25.0
+              }
+            ],
+
+            "children": [
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              0.0,
+                              0.0,
+                              0.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                20.0,
+                                20.0,
+                                20.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "sphere",
+                        "material": {
+                            "ambient": [
+                                0.4,
+                                0.2,
+                                0.6,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                }
+            ]
+        }
+    }
+
+
+    `;
+        }
         createSmallScene() {
             return `
         {
@@ -8495,6 +8728,13 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                 this.renderer.draw(this.root, modelView);
             }
         }
+        intersect(ray, modelView) {
+            let isHit1;
+            if ((this.root != null) && (this.renderer != null)) {
+                isHit1 = this.renderer.intersect(this.root, ray, modelView, false);
+            }
+            return isHit1;
+        }
         addPolygonMesh(meshName, mesh) {
             this.meshes.set(meshName, mesh);
         }
@@ -8553,6 +8793,8 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
     exports.ScenegraphJSONImporter = void 0;
     var ScenegraphJSONImporter;
     (function (ScenegraphJSONImporter) {
+        let translateBy;
+        let scaleBy;
         /**
          * This function parses a scenegraph specified in JSON format, and produces a scene graph
          * @param producer the vertex producer to load all the meshes used in the scene graph
@@ -8587,6 +8829,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             });
         }
         ScenegraphJSONImporter.importJSON = importJSON;
+        function getTransformInfo(center, radius) {
+            return [center, radius];
+        }
+        ScenegraphJSONImporter.getTransformInfo = getTransformInfo;
         function handleNode(scenegraph, obj) {
             let result = null;
             if (!("type" in obj)) {
@@ -8631,7 +8877,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                     if (values.length != 3) {
                         throw new Error("3 values needed for translate");
                     }
-                    let translateBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
+                    translateBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
                     gl_matrix_1.mat4.translate(transform, transform, translateBy);
                 }
                 else if ("scale" in op) {
@@ -8639,7 +8885,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                     if (values.length != 3) {
                         throw new Error("3 values needed for scale");
                     }
-                    let scaleBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
+                    scaleBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
                     gl_matrix_1.mat4.scale(transform, transform, scaleBy);
                 }
                 else if ("rotate" in op) {
@@ -8812,6 +9058,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             if ("material" in obj) {
                 material = handleMaterial(obj["material"]);
             }
+            result.setTransformInfo(translateBy, scaleBy);
             result.setMaterial(material);
             if ("texture" in obj) {
                 let textureName = obj["texture"];
@@ -8924,6 +9171,34 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             this.sendLightsToShader(lights);
             root.draw(this, modelView);
         }
+        intersect(root, ray, modelView, isHit) {
+            isHit = root.intersect(this, ray, modelView, isHit);
+            return isHit;
+        }
+        hit_sphere(center, radius, r) {
+            let oc = center;
+            let a = gl_matrix_1.vec4.dot(r.direction, r.direction);
+            let b = 2.0 * gl_matrix_1.vec4.dot(oc, r.direction);
+            let c = gl_matrix_1.vec4.dot(oc, oc) - radius * radius;
+            let discriminant = b * b - 4 * a * c;
+            if (discriminant < 0) {
+                return -1.0;
+            }
+            else {
+                return (-b - Math.sqrt(discriminant)) / (2.0 * a);
+            }
+        }
+        intersectNode(meshName, ray, transformation, isHit, info) {
+            if (this.meshRenderers.has(meshName)) {
+                console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
+                let objectType = this.meshRenderers.get(meshName).getName();
+                if (objectType == "sphere") {
+                    console.log("QAUDRATIC: " + this.hit_sphere([info.center[0], info.center[1], info.center[2], 1], info.radius, ray));
+                }
+                isHit = true;
+            }
+            return isHit;
+        }
         sendLightsToShader(lights) {
             //send all the light colors
             for (let i = 0; i < lights.length; i++) {
@@ -9022,6 +9297,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         let gl;
         let view;
         let controller;
+        let raytracerView;
         window.onload = ev => {
             //retrieve <canvas> element
             var canvas = document.querySelector("#glCanvas");
@@ -9038,8 +9314,10 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             }
             console.log("Window loaded");
             view = new View_1.View(gl);
-            controller = new Controller_1.Controller(view);
-            controller.go();
+            raytracerView = new RTView_1.RTView(5);
+            controller = new Controller_1.Controller(view, raytracerView);
+            raytracerView = controller.go();
+            console.log("First time scene " + raytracerView.scenegraph);
             var tick = function () {
                 if (lastTime == -1) {
                     lastTime = new Date().getTime();
@@ -9052,9 +9330,13 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
                     document.getElementById('frameratedisplay').innerHTML = "Frame rate: " + frameRate.toFixed(1);
                     numFrames = 0;
                 }
+                let scenegraphTest = view.scenegraph;
+                //scenegraphTest = raytracerView.scenegraph;
                 view.animate();
                 view.draw();
-                let raytracerView = new RTView_1.RTView();
+                // Copy the scenegraph to RTView
+                //raytracerView.scenegraph = view.scenegraph;
+                raytracerView.rayTrace();
                 raytracerView.fillCanvas();
                 //this line sets up the animation
                 requestAnimationFrame(tick);
@@ -9179,6 +9461,15 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             if (this.child != null)
                 this.child.draw(context, modelView);
             modelView.pop();
+        }
+        intersect(context, ray, modelView, isHit) {
+            modelView.push(gl_matrix_1.mat4.clone(modelView.peek()));
+            gl_matrix_1.mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
+            gl_matrix_1.mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
+            if (this.child != null)
+                isHit = this.child.intersect(context, ray, modelView, isHit);
+            modelView.pop();
+            return isHit;
         }
         /**
          * Sets the animation transform of this node
@@ -9324,7 +9615,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
   \*********************/
 /***/ ((module, exports, __webpack_require__) => {
 
-var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! gl-matrix */ "../../../../../../../AppData/Roaming/npm/node_modules/gl-matrix/esm/index.js"), __webpack_require__(/*! %COMMON/WebGLUtils */ "../common/WebGLUtils.ts"), __webpack_require__(/*! %COMMON/Stack */ "../common/Stack.ts"), __webpack_require__(/*! ./VertexPNT */ "./src/VertexPNT.ts"), __webpack_require__(/*! %COMMON/ShaderLocationsVault */ "../common/ShaderLocationsVault.ts"), __webpack_require__(/*! ./ScenegraphRenderer */ "./src/ScenegraphRenderer.ts"), __webpack_require__(/*! ./ScenegraphJSONImporter */ "./src/ScenegraphJSONImporter.ts"), __webpack_require__(/*! ./RayTracing */ "./src/RayTracing.ts")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, gl_matrix_1, WebGLUtils, Stack_1, VertexPNT_1, ShaderLocationsVault_1, ScenegraphRenderer_1, ScenegraphJSONImporter_1, RayTracing_1) {
+var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__, exports, __webpack_require__(/*! gl-matrix */ "../../../../../../../AppData/Roaming/npm/node_modules/gl-matrix/esm/index.js"), __webpack_require__(/*! %COMMON/WebGLUtils */ "../common/WebGLUtils.ts"), __webpack_require__(/*! %COMMON/Stack */ "../common/Stack.ts"), __webpack_require__(/*! ./VertexPNT */ "./src/VertexPNT.ts"), __webpack_require__(/*! %COMMON/ShaderLocationsVault */ "../common/ShaderLocationsVault.ts"), __webpack_require__(/*! ./ScenegraphRenderer */ "./src/ScenegraphRenderer.ts"), __webpack_require__(/*! ./ScenegraphJSONImporter */ "./src/ScenegraphJSONImporter.ts"), __webpack_require__(/*! ./RayTracing */ "./src/RayTracing.ts"), __webpack_require__(/*! ./RTView */ "./src/RTView.ts")], __WEBPACK_AMD_DEFINE_RESULT__ = (function (require, exports, gl_matrix_1, WebGLUtils, Stack_1, VertexPNT_1, ShaderLocationsVault_1, ScenegraphRenderer_1, ScenegraphJSONImporter_1, RayTracing_1, RTView_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", ({ value: true }));
     exports.View = void 0;
@@ -9339,6 +9630,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             this.scenegraph = null;
             //set the clear color
             this.gl.clearColor(0.9, 0.9, 0.7, 1);
+            this.raytracerView = new RTView_1.RTView(20);
             //Our quad is in the range (-100,100) in X and Y, in the "virtual world" that we are drawing. We must specify what part of this virtual world must be drawn. We do this via a projection matrix, set up as below. In this case, we are going to render the part of the virtual world that is inside a square from (-200,-200) to (200,200). Since we are drawing only 2D, the last two arguments are not useful. The default Z-value chosen is 0, which means we only specify the last two numbers such that 0 is within their range (in this case we have specified them as (-100,100))
             //this.proj = mat4.ortho(mat4.create(), -60, 60, -100, 100, 0.1, 10000);
             this.proj = gl_matrix_1.mat4.perspective(gl_matrix_1.mat4.create(), 1, gl_matrix_1.glMatrix.toRadian(60), 0.1, 10000);
@@ -9364,16 +9656,18 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
             let renderer = new ScenegraphRenderer_1.ScenegraphRenderer(this.gl, this.shaderLocations, shaderVarsToVertexAttribs);
             this.scenegraph.setRenderer(renderer);
         }
-        initScenegraph() {
-            let simpleScene = new RayTracing_1.Scene;
-            return new Promise((resolve) => {
-                ScenegraphJSONImporter_1.ScenegraphJSONImporter.importJSON(new VertexPNT_1.VertexPNTProducer(), simpleScene.createSmallScene())
-                    .then((s) => {
-                    this.scenegraph = s;
-                    resolve();
-                });
-            });
-        }
+        /*public initScenegraph(): Promise<void> {
+      
+          let simpleScene = new Scene;
+      
+          return new Promise<void>((resolve) => {
+            ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere())
+              .then((s: Scenegraph<VertexPNT>) => {
+                this.scenegraph = s;
+                resolve();
+              });
+          });
+        }*/
         face() {
             return `
     {
@@ -10893,6 +11187,18 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
         }
         `;
         }
+        initScenegraph() {
+            let simpleScene = new RayTracing_1.Scene;
+            return new Promise((resolve) => {
+                ScenegraphJSONImporter_1.ScenegraphJSONImporter.importJSON(new VertexPNT_1.VertexPNTProducer(), simpleScene.createSphere())
+                    .then((s) => {
+                    this.raytracerView.check = 10;
+                    this.raytracerView.scenegraph = s;
+                    this.scenegraph = s;
+                    resolve();
+                });
+            });
+        }
         animate() {
             this.time += 1;
             if (this.scenegraph != null) {
@@ -10916,8 +11222,11 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_
              */
             this.modelview.push(gl_matrix_1.mat4.create());
             this.modelview.push(gl_matrix_1.mat4.clone(this.modelview.peek()));
-            gl_matrix_1.mat4.lookAt(this.modelview.peek(), gl_matrix_1.vec3.fromValues(0, 40, 100), gl_matrix_1.vec3.fromValues(0, 0, 0), gl_matrix_1.vec3.fromValues(0, 1, 0));
+            gl_matrix_1.mat4.lookAt(this.modelview.peek(), gl_matrix_1.vec3.fromValues(0, 0, -50), gl_matrix_1.vec3.fromValues(0, 0, 0), gl_matrix_1.vec3.fromValues(0, 1, 0));
             this.gl.uniformMatrix4fv(this.shaderLocations.getUniformLocation("projection"), false, this.proj);
+            if (this.scenegraph == null) {
+                console.log("view scenegraph is null");
+            }
             this.scenegraph.draw(this.modelview);
         }
         freeMeshes() {

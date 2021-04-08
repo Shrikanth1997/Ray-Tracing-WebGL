@@ -106,7 +106,7 @@ export class LeafNode extends SGNode {
     public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
         console.log("Check if transform is correct " + this.LeafTransformInfo.center + ", " + this.LeafTransformInfo.radius);
         if (this.meshName.length > 0) {
-            isHit = context.intersectNode(this.meshName, modelView.peek(), isHit);
+            isHit = context.intersectNode(this.meshName, ray,  modelView.peek(), isHit, this.LeafTransformInfo);
         }
         console.log("Check HIT: " + isHit);
         return isHit;

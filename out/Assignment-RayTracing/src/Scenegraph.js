@@ -54,6 +54,13 @@ define(["require", "exports"], function (require, exports) {
                 this.renderer.draw(this.root, modelView);
             }
         }
+        intersect(ray, modelView) {
+            let isHit1;
+            if ((this.root != null) && (this.renderer != null)) {
+                isHit1 = this.renderer.intersect(this.root, ray, modelView, false);
+            }
+            return isHit1;
+        }
         addPolygonMesh(meshName, mesh) {
             this.meshes.set(meshName, mesh);
         }

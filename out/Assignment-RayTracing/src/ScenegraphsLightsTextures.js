@@ -10,6 +10,7 @@ define(["require", "exports", "./View", "%COMMON/WebGLUtils", "./Controller", ".
         let gl;
         let view;
         let controller;
+        let raytracerView;
         window.onload = ev => {
             //retrieve <canvas> element
             var canvas = document.querySelector("#glCanvas");
@@ -26,8 +27,10 @@ define(["require", "exports", "./View", "%COMMON/WebGLUtils", "./Controller", ".
             }
             console.log("Window loaded");
             view = new View_1.View(gl);
-            controller = new Controller_1.Controller(view);
-            controller.go();
+            raytracerView = new RTView_1.RTView(5);
+            controller = new Controller_1.Controller(view, raytracerView);
+            raytracerView = controller.go();
+            console.log("First time scene " + raytracerView.scenegraph);
             var tick = function () {
                 if (lastTime == -1) {
                     lastTime = new Date().getTime();
@@ -40,9 +43,13 @@ define(["require", "exports", "./View", "%COMMON/WebGLUtils", "./Controller", ".
                     document.getElementById('frameratedisplay').innerHTML = "Frame rate: " + frameRate.toFixed(1);
                     numFrames = 0;
                 }
+                let scenegraphTest = view.scenegraph;
+                //scenegraphTest = raytracerView.scenegraph;
                 view.animate();
                 view.draw();
-                let raytracerView = new RTView_1.RTView();
+                // Copy the scenegraph to RTView
+                //raytracerView.scenegraph = view.scenegraph;
+                raytracerView.rayTrace();
                 raytracerView.fillCanvas();
                 //this line sets up the animation
                 requestAnimationFrame(tick);

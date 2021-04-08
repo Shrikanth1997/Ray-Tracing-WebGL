@@ -29,10 +29,10 @@ define(["require", "exports", "./View", "%COMMON/WebGLUtils", "./RTView"], funct
         //initialize the view, and pass the shader sources to the view
         //this.view.init(vShaderSource, fShaderSource);
         //draw the view. You must call draw *each time* you would like to draw the screen (i.e. there is no auto refresh)
-        view.draw();
+        //view.draw();
         //set up the ray tracer view
-        let raytracerView = new RTView_1.RTView();
-        raytracerView.fillCanvas();
+        let raytracerView = new RTView_1.RTView(15);
+        //raytracerView.fillCanvas();
     }
     function init(gl) {
     }

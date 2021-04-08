@@ -1,23 +1,39 @@
-define(["require", "exports"], function (require, exports) {
+define(["require", "exports", "./VertexPNT", "./ScenegraphJSONImporter", "./RayTracing"], function (require, exports, VertexPNT_1, ScenegraphJSONImporter_1, RayTracing_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Controller = void 0;
     class Controller {
-        constructor(view) {
+        constructor(view, raytracerView) {
             this.view = view;
+            this.raytracerView = raytracerView;
             this.view.setFeatures(this);
         }
+        initScenegraph() {
+            let simpleScene = new RayTracing_1.Scene;
+            return new Promise((resolve) => {
+                ScenegraphJSONImporter_1.ScenegraphJSONImporter.importJSON(new VertexPNT_1.VertexPNTProducer(), simpleScene.createSphere())
+                    .then((s) => {
+                    this.raytracerView.check = 10;
+                    this.raytracerView.scenegraph = s;
+                    this.view.scenegraph = s;
+                    resolve();
+                });
+            });
+        }
         go() {
-            this.view.initScenegraph()
+            this.initScenegraph()
                 .then(() => {
                 let numLights = this.view.getNumLights();
-                console.log("Num lights: " + numLights);
+                console.log("view_Scenegraph: " + this.view.scenegraph);
+                console.log("Check if rt works " + this.raytracerView.scenegraph);
                 if (numLights == 0)
                     numLights = 2;
                 this.view.initShaders(this.getPhongVShader(), this.getPhongFShader(numLights));
                 this.view.initRenderer();
                 this.view.draw();
+                //this.raytracerView.scenegraph = this.view.scenegraph;
             });
+            return this.raytracerView;
         }
         getPhongVShader() {
             return `
@@ -92,7 +108,7 @@ define(["require", "exports"], function (require, exports) {
             vec3 ambient,diffuse,specular;
             float nDotL,rDotV;
             vec4 result;
-        
+            vec4 result_dummy;
         
             result = vec4(0,0,0,1);
         `
@@ -127,7 +143,7 @@ define(["require", "exports"], function (require, exports) {
                     result = result + vec4(ambient+diffuse+specular,1.0);  
                 }  
             }
-            result = result * texture2D(image,fTexCoord.st);
+            result_dummy = result_dummy * texture2D(image,fTexCoord.st);
             gl_FragColor = result;
         }
         

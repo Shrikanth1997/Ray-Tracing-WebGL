@@ -1,4 +1,4 @@
-define(["require", "exports", "gl-matrix", "%COMMON/WebGLUtils", "%COMMON/Stack", "./VertexPNT", "%COMMON/ShaderLocationsVault", "./ScenegraphRenderer", "./ScenegraphJSONImporter", "./RayTracing"], function (require, exports, gl_matrix_1, WebGLUtils, Stack_1, VertexPNT_1, ShaderLocationsVault_1, ScenegraphRenderer_1, ScenegraphJSONImporter_1, RayTracing_1) {
+define(["require", "exports", "gl-matrix", "%COMMON/WebGLUtils", "%COMMON/Stack", "./VertexPNT", "%COMMON/ShaderLocationsVault", "./ScenegraphRenderer", "./ScenegraphJSONImporter", "./RayTracing", "./RTView"], function (require, exports, gl_matrix_1, WebGLUtils, Stack_1, VertexPNT_1, ShaderLocationsVault_1, ScenegraphRenderer_1, ScenegraphJSONImporter_1, RayTracing_1, RTView_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.View = void 0;
@@ -13,6 +13,7 @@ define(["require", "exports", "gl-matrix", "%COMMON/WebGLUtils", "%COMMON/Stack"
             this.scenegraph = null;
             //set the clear color
             this.gl.clearColor(0.9, 0.9, 0.7, 1);
+            this.raytracerView = new RTView_1.RTView(20);
             //Our quad is in the range (-100,100) in X and Y, in the "virtual world" that we are drawing. We must specify what part of this virtual world must be drawn. We do this via a projection matrix, set up as below. In this case, we are going to render the part of the virtual world that is inside a square from (-200,-200) to (200,200). Since we are drawing only 2D, the last two arguments are not useful. The default Z-value chosen is 0, which means we only specify the last two numbers such that 0 is within their range (in this case we have specified them as (-100,100))
             //this.proj = mat4.ortho(mat4.create(), -60, 60, -100, 100, 0.1, 10000);
             this.proj = gl_matrix_1.mat4.perspective(gl_matrix_1.mat4.create(), 1, gl_matrix_1.glMatrix.toRadian(60), 0.1, 10000);
@@ -38,16 +39,18 @@ define(["require", "exports", "gl-matrix", "%COMMON/WebGLUtils", "%COMMON/Stack"
             let renderer = new ScenegraphRenderer_1.ScenegraphRenderer(this.gl, this.shaderLocations, shaderVarsToVertexAttribs);
             this.scenegraph.setRenderer(renderer);
         }
-        initScenegraph() {
-            let simpleScene = new RayTracing_1.Scene;
-            return new Promise((resolve) => {
-                ScenegraphJSONImporter_1.ScenegraphJSONImporter.importJSON(new VertexPNT_1.VertexPNTProducer(), simpleScene.createSmallScene())
-                    .then((s) => {
-                    this.scenegraph = s;
-                    resolve();
-                });
-            });
-        }
+        /*public initScenegraph(): Promise<void> {
+      
+          let simpleScene = new Scene;
+      
+          return new Promise<void>((resolve) => {
+            ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere())
+              .then((s: Scenegraph<VertexPNT>) => {
+                this.scenegraph = s;
+                resolve();
+              });
+          });
+        }*/
         face() {
             return `
     {
@@ -1567,6 +1570,18 @@ define(["require", "exports", "gl-matrix", "%COMMON/WebGLUtils", "%COMMON/Stack"
         }
         `;
         }
+        initScenegraph() {
+            let simpleScene = new RayTracing_1.Scene;
+            return new Promise((resolve) => {
+                ScenegraphJSONImporter_1.ScenegraphJSONImporter.importJSON(new VertexPNT_1.VertexPNTProducer(), simpleScene.createSphere())
+                    .then((s) => {
+                    this.raytracerView.check = 10;
+                    this.raytracerView.scenegraph = s;
+                    this.scenegraph = s;
+                    resolve();
+                });
+            });
+        }
         animate() {
             this.time += 1;
             if (this.scenegraph != null) {
@@ -1590,8 +1605,11 @@ define(["require", "exports", "gl-matrix", "%COMMON/WebGLUtils", "%COMMON/Stack"
              */
             this.modelview.push(gl_matrix_1.mat4.create());
             this.modelview.push(gl_matrix_1.mat4.clone(this.modelview.peek()));
-            gl_matrix_1.mat4.lookAt(this.modelview.peek(), gl_matrix_1.vec3.fromValues(0, 40, 100), gl_matrix_1.vec3.fromValues(0, 0, 0), gl_matrix_1.vec3.fromValues(0, 1, 0));
+            gl_matrix_1.mat4.lookAt(this.modelview.peek(), gl_matrix_1.vec3.fromValues(0, 0, -50), gl_matrix_1.vec3.fromValues(0, 0, 0), gl_matrix_1.vec3.fromValues(0, 1, 0));
             this.gl.uniformMatrix4fv(this.shaderLocations.getUniformLocation("projection"), false, this.proj);
+            if (this.scenegraph == null) {
+                console.log("view scenegraph is null");
+            }
             this.scenegraph.draw(this.modelview);
         }
         freeMeshes() {

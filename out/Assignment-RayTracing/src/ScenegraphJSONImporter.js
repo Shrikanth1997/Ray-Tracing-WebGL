@@ -4,6 +4,8 @@ define(["require", "exports", "./Scenegraph", "./GroupNode", "%COMMON/ObjImporte
     exports.ScenegraphJSONImporter = void 0;
     var ScenegraphJSONImporter;
     (function (ScenegraphJSONImporter) {
+        let translateBy;
+        let scaleBy;
         /**
          * This function parses a scenegraph specified in JSON format, and produces a scene graph
          * @param producer the vertex producer to load all the meshes used in the scene graph
@@ -38,6 +40,10 @@ define(["require", "exports", "./Scenegraph", "./GroupNode", "%COMMON/ObjImporte
             });
         }
         ScenegraphJSONImporter.importJSON = importJSON;
+        function getTransformInfo(center, radius) {
+            return [center, radius];
+        }
+        ScenegraphJSONImporter.getTransformInfo = getTransformInfo;
         function handleNode(scenegraph, obj) {
             let result = null;
             if (!("type" in obj)) {
@@ -82,7 +88,7 @@ define(["require", "exports", "./Scenegraph", "./GroupNode", "%COMMON/ObjImporte
                     if (values.length != 3) {
                         throw new Error("3 values needed for translate");
                     }
-                    let translateBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
+                    translateBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
                     gl_matrix_1.mat4.translate(transform, transform, translateBy);
                 }
                 else if ("scale" in op) {
@@ -90,7 +96,7 @@ define(["require", "exports", "./Scenegraph", "./GroupNode", "%COMMON/ObjImporte
                     if (values.length != 3) {
                         throw new Error("3 values needed for scale");
                     }
-                    let scaleBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
+                    scaleBy = gl_matrix_1.vec3.fromValues(values[0], values[1], values[2]);
                     gl_matrix_1.mat4.scale(transform, transform, scaleBy);
                 }
                 else if ("rotate" in op) {
@@ -263,6 +269,7 @@ define(["require", "exports", "./Scenegraph", "./GroupNode", "%COMMON/ObjImporte
             if ("material" in obj) {
                 material = handleMaterial(obj["material"]);
             }
+            result.setTransformInfo(translateBy, scaleBy);
             result.setMaterial(material);
             if ("texture" in obj) {
                 let textureName = obj["texture"];
