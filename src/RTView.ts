@@ -9,6 +9,9 @@ export class RTView {
     private modelview: Stack<mat4>;
     private width: number;
     private height: number;
+    public imageData: ImageData;
+
+    public colorsArray: Array<number>;
 
     public check: number;
 
@@ -27,11 +30,13 @@ export class RTView {
 
         this.width = Number(this.canvas.getAttribute("width"));
         this.height = Number(this.canvas.getAttribute("height"));
-
+        this.imageData = this.canvas.getContext('2d'). createImageData(this.width, this.height);
 
         this.check = check;
 
         this.scenegraph = null;
+
+        this.colorsArray = new Array<number>(this.width*this.height);
     }
 
     private saveCanvas(): void {
@@ -42,6 +47,7 @@ export class RTView {
     }
 
     public fillCanvas(): void {
+        
         let width: number = Number(this.canvas.getAttribute("width"));
         let height: number = Number(this.canvas.getAttribute("height"));
         let imageData: ImageData = this.canvas.getContext('2d'). createImageData(width, height);
@@ -49,8 +55,8 @@ export class RTView {
         for (let i: number = 0; i < height; i++) {
             for (let j: number = 0; j < width; j++) {
                 imageData.data[4 * (i * width + j)] = 0;//Math.random() * 255;
-                imageData.data[4 * (i * width + j) + 1] = 0;//Math.random() * 255;
-                imageData.data[4 * (i * width + j) + 2] = 255;//Math.random() * 255;
+                imageData.data[4 * (i * width + j) + 1] = 100;//Math.random() * 255;
+                imageData.data[4 * (i * width + j) + 2] = 0;//Math.random() * 255;
                 imageData.data[4 * (i * width + j) + 3] = 255;
             }
         }
@@ -74,36 +80,49 @@ export class RTView {
 
         let H: number = this.height;
         let W: number = this.width;
-
+    
         let focalLen: number = 1;
         let origin: vec4 = vec4.fromValues(0, 0, 0, 1);
         // Loop over all the pixels
-        /*for(let j: number = this.height-1; j >= 0; j++)
-        {
-            for(let i: number = 0; i < this.width; i++)
-            {
-               
-                let x: number = (i / (this.width - 1)) * this.width;
-                let y: number = (j / (this.height - 1)) * this.height;
-                let dir: vec4 = vec4.fromValues((x - this.width/2), (y - this.height/2), -focalLen, 0);
-                
-                let ray: Ray3D = new Ray3D(origin, dir);
-                let color: vec3 = this.rayCast(ray, this.modelview);
-            }
-        }*/
 
         if(this.scenegraph != null)
         {
-            for(let x: number =0;x<=W/2;x=x+1){
-                for(let y: number=0;y<=H/2;y=y+1){
+
+            let index_r: number = 0;
+            let index_c: number = 0;
+            /*for(let j: number = this.height-1; j >= 0; j--, index_r++)
+            {
+                for(let i: number = 0; i < this.width; i++, index_c++)
+                {
+                    let x: number = (i / (this.width - 1)) * this.width;
+                    let y: number = (j / (this.height - 1)) * this.height;
+                    let dir: vec4 = vec4.fromValues((x - this.width/2), (y - this.height/2), -focalLen, 0);
+                    
+                    let ray: Ray3D = new Ray3D(origin, dir);
+                    let color: vec3 = this.rayCast(ray, this.modelview);
+                    console.log("COLOR: " + color[0]+color[1]+color[2]);
+                }
+            }*/
+            for(let x: number =0;x<=W;x=x+1){
+                for(let y: number=0;y<=H;y=y+1){
                     let Sv: vec4 = [0,0,0,1];
                     let V: vec4 = [x-W/2, y-H/2, (-H/2)/Math.tan(glMatrix.toRadian(30)),1];
                     let ray: Ray3D = new Ray3D(Sv, V);
 
                     let color: vec3 = this.rayCast(ray, this.modelview);
+
+                    this.imageData.data[4 * (y * W + x)] = color[0];//Math.random() * 255;
+                    this.imageData.data[4 * (y * W + x) + 1] = color[1];//Math.random() * 255;
+                    this.imageData.data[4 * (y * W + x) + 2] = color[2];//Math.random() * 255;
+                    this.imageData.data[4 * (y * W + x) + 3] = 255;
+
                     console.log("COLOR: " + color);
                 }
             }
+
+            console.log(" =================== Tracing DONE ============");
+            this.canvas.getContext('2d').putImageData(this.imageData, 0, 0);
+            //this.fillCanvas();
         }
         
     }
@@ -126,11 +145,11 @@ export class RTView {
 
         if(this.scenegraph != null)
         {
-            console.log("RTView scenegraph is not null " + this.scenegraph.intersect(ray, modelView));
+            //console.log("RTView scenegraph is not null " + this.scenegraph.intersect(ray, modelView));
             if(this.scenegraph.intersect(ray, modelView)==true)
             {
                 console.log("hit");
-                return [1,1,1];
+                return [200,200,1];
             }
             else{
                 console.log("NO hit");

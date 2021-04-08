@@ -122,11 +122,15 @@ export class ScenegraphRenderer {
             let objectType: string = this.meshRenderers.get(meshName).getName();
 
             if(objectType == "sphere"){
-                console.log("QAUDRATIC: " + this.hit_sphere([info.center[0],info.center[1],info.center[2],1], info.radius, ray));
+                if(this.hit_sphere([info.center[0],info.center[1],info.center[2],1], info.radius, ray) != -1)
+                {
+                    isHit = true;
+                }
+                else
+                {
+                    isHit = false;
+                }
             }
-
-
-            isHit = true;
         }
         return isHit;
     }

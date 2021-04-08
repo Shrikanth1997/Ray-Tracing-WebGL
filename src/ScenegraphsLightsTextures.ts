@@ -58,13 +58,11 @@ function main(): void {
 
             let scenegraphTest: Scenegraph<VertexPNT> = view.scenegraph;
             //scenegraphTest = raytracerView.scenegraph;
-            view.animate();
-            view.draw();
-
-            // Copy the scenegraph to RTView
-            //raytracerView.scenegraph = view.scenegraph;
+            //view.animate();
+            //view.draw();
             raytracerView.rayTrace();
-            raytracerView.fillCanvas();
+            
+            //raytracerView.fillCanvas();
             
             //this line sets up the animation
             requestAnimationFrame(tick);
