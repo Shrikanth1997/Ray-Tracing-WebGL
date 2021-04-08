@@ -90,23 +90,30 @@ export class RTView {
 
             let index_r: number = 0;
             let index_c: number = 0;
-            /*for(let j: number = this.height-1; j >= 0; j--, index_r++)
+            /*for(let j: number = H-1; j >= 0; j--, index_r++)
             {
-                for(let i: number = 0; i < this.width; i++, index_c++)
+                for(let i: number = 0; i < W; i++, index_c++)
                 {
-                    let x: number = (i / (this.width - 1)) * this.width;
-                    let y: number = (j / (this.height - 1)) * this.height;
-                    let dir: vec4 = vec4.fromValues((x - this.width/2), (y - this.height/2), -focalLen, 0);
+                    let x: number = (i / (W - 1)) * W;
+                    let y: number = (j / (H - 1)) * H;
+                    let dir: vec4 = vec4.fromValues((x - W/2), (y - H/2), -focalLen, 0);
                     
                     let ray: Ray3D = new Ray3D(origin, dir);
                     let color: vec3 = this.rayCast(ray, this.modelview);
-                    console.log("COLOR: " + color[0]+color[1]+color[2]);
+
+                    this.imageData.data[4 * (index_r * W + index_c)] = color[0];//Math.random() * 255;
+                    this.imageData.data[4 * (index_r * W + index_c) + 1] = color[1];//Math.random() * 255;
+                    this.imageData.data[4 * (index_r * W + index_c) + 2] = color[2];//Math.random() * 255;
+                    this.imageData.data[4 * (index_r * W + index_c) + 3] = 255;
+
+                    //console.log("COLOR: " + color[0]+color[1]+color[2]);
                 }
             }*/
-            for(let x: number =0;x<=W;x=x+1){
-                for(let y: number=0;y<=H;y=y+1){
+            for(let y: number =0;y<=H;y=y+1){
+                for(let x: number=0;x<=W;x=x+1){
                     let Sv: vec4 = [0,0,0,1];
-                    let V: vec4 = [x-W/2, y-H/2, (-H/2)/Math.tan(glMatrix.toRadian(30)),1];
+                    //let V: vec4 = [x-W/2, y-H/2, (-H/2)/Math.tan(glMatrix.toRadian(30)),1];
+                    let V: vec4 = [0,0,-1,0];
                     let ray: Ray3D = new Ray3D(Sv, V);
 
                     let color: vec3 = this.rayCast(ray, this.modelview);
@@ -116,11 +123,11 @@ export class RTView {
                     this.imageData.data[4 * (y * W + x) + 2] = color[2];//Math.random() * 255;
                     this.imageData.data[4 * (y * W + x) + 3] = 255;
 
-                    console.log("COLOR: " + color);
+                    //console.log("COLOR: " + color);
                 }
             }
 
-            console.log(" =================== Tracing DONE ============");
+            console.log(" =================== Tracing DONE ===============");
             this.canvas.getContext('2d').putImageData(this.imageData, 0, 0);
             //this.fillCanvas();
         }
@@ -133,26 +140,19 @@ export class RTView {
         let rayHit: HitRecord;
 
         
-        console.log("Reached cast " + this.scenegraph);
-        /*if(this.scenegraph == null)
-        {
-            console.log("RTView scenegraph is null");
-        }
-        else
-        {
-            console.log("RTView scenegraph is not null");
-        }*/
+        //console.log("Reached cast " + this.scenegraph);
 
         if(this.scenegraph != null)
         {
             //console.log("RTView scenegraph is not null " + this.scenegraph.intersect(ray, modelView));
             if(this.scenegraph.intersect(ray, modelView)==true)
             {
-                console.log("hit");
-                return [200,200,1];
+                //console.log("hit");
+                return [200,200,100];
             }
             else{
-                console.log("NO hit");
+                //console.log("NO hit");
+                return [0,0,0];
             }
         }
 

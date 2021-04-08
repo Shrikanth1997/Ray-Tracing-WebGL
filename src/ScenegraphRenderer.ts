@@ -101,11 +101,15 @@ export class ScenegraphRenderer {
 
 
     public hit_sphere(center: vec4, radius: number,r: Ray3D): number {
-        let oc: vec4 = center;
+        //console.log("RAY DIRECTION: " + r.direction);
+
+        let oc: vec4 = vec4.subtract(vec4.create(), r.position, center);
         let a: number = vec4.dot(r.direction, r.direction);
         let b: number = 2.0 * vec4.dot(oc, r.direction);
         let c: number = vec4.dot(oc, oc) - radius*radius;
         let discriminant: number = b*b - 4*a*c;
+
+        console.log("Discriminant: " + b + ", " + a + ", " + c);
 
         if (discriminant < 0) {
             return -1.0;
@@ -117,12 +121,15 @@ export class ScenegraphRenderer {
     public intersectNode(meshName: string, ray:Ray3D, transformation: mat4, isHit: boolean, info: TransformationInfo): boolean
     {
         if (this.meshRenderers.has(meshName)) {
-            console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
+            //console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
+
+            ray.direction = vec4.transformMat4(vec4.create(), ray.direction, mat4.invert(mat4.create(),transformation));
+            ray.position = vec4.transformMat4(vec4.create(), ray.position, mat4.invert(mat4.create(),transformation));
 
             let objectType: string = this.meshRenderers.get(meshName).getName();
 
             if(objectType == "sphere"){
-                if(this.hit_sphere([info.center[0],info.center[1],info.center[2],1], info.radius, ray) != -1)
+                if(this.hit_sphere([info.center[0],info.center[1],info.center[2],1], 0.5, ray) != -1)
                 {
                     isHit = true;
                 }
