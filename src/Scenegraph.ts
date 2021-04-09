@@ -6,7 +6,7 @@ import { mat4, glMatrix, vec3 } from "gl-matrix";
 import { Stack } from "%COMMON/Stack";
 import { Light } from "%COMMON/Light";
 import { Controller } from "./Controller";
-import { Ray3D } from "./RayTracing";
+import { HitRecord, Ray3D } from "./RayTracing";
 
 export class Scenegraph<VertexType extends IVertexData> {
     /**
@@ -95,12 +95,17 @@ export class Scenegraph<VertexType extends IVertexData> {
         }
     }
 
-    public intersect(ray: Ray3D, modelView: Stack<mat4>): boolean {
+    public getLights(modelView: Stack<mat4>): Light[]{
+        return this.renderer.getLights(this.root, modelView);
+    }
+
+    public intersect(ray: Ray3D, modelView: Stack<mat4>): [boolean, HitRecord] {
         let isHit1: boolean;
+        let hitr: HitRecord;
         if ((this.root != null) && (this.renderer != null)) {
-            isHit1 = this.renderer.intersect(this.root, ray, modelView, false);
+            [isHit1,hitr] = this.renderer.intersect(this.root, ray, modelView, false);
         }
-        return isHit1;
+        return [isHit1, hitr];
     }
 
 

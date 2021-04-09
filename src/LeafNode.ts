@@ -5,7 +5,7 @@ import { Material } from "%COMMON/Material";
 import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { IVertexData } from "%COMMON/IVertexData";
-import { Ray3D } from "./RayTracing";
+import { Ray3D, HitRecord } from "./RayTracing";
 
 
 /**
@@ -103,12 +103,13 @@ export class LeafNode extends SGNode {
         }
     }
 
-    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
         //console.log("Check if transform is correct " + this.LeafTransformInfo.center + ", " + this.LeafTransformInfo.radius);
+        let hitr: HitRecord;
         if (this.meshName.length > 0) {
-            isHit = context.intersectNode(this.meshName, ray,  modelView.peek(), isHit, this.LeafTransformInfo);
+            [isHit,hitr]  = context.intersectNode(this.meshName, ray,  modelView.peek(), isHit, this.LeafTransformInfo, this.material);
         }
         //console.log("Check HIT: " + isHit);
-        return isHit;
+        return [isHit, hitr];
     }
 }

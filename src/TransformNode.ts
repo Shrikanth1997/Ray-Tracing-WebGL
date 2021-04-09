@@ -5,7 +5,7 @@ import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Light } from "%COMMON/Light";
-import { Ray3D } from "./RayTracing";
+import { HitRecord, Ray3D } from "./RayTracing";
 
 
 /**
@@ -135,16 +135,17 @@ export class TransformNode extends SGNode {
         modelView.pop();
     }
 
-    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
         modelView.push(mat4.clone(modelView.peek()));
         mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
         mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
 
+        let hitr: HitRecord;
         if (this.child != null)
-            isHit = this.child.intersect(context, ray, modelView, isHit);
+            [isHit, hitr] = this.child.intersect(context, ray, modelView, isHit);
         modelView.pop();
 
-        return isHit;
+        return [isHit, hitr];
     }
 
 

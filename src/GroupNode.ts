@@ -5,7 +5,7 @@ import { Stack } from "%COMMON/Stack";
 import { mat4, vec4, vec3 } from "gl-matrix";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Light } from "%COMMON/Light";
-import { Ray3D } from "./RayTracing";
+import { Ray3D, HitRecord } from "./RayTracing";
 
 /**
  * This class represents a group node in the scenegraph. A group node is simply a logical grouping
@@ -65,11 +65,12 @@ export class GroupNode extends SGNode {
         this.children.forEach(child => child.draw(context, modelView));
     }
 
-    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
+    public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
         let hits: boolean;
-        this.children.forEach(child => hits = child.intersect(context, ray, modelView, isHit));
+        let hitr: HitRecord
+        this.children.forEach(child => [hits,hitr] = child.intersect(context, ray, modelView, isHit));
 
-        return hits;
+        return [hits, hitr];
     }
 
     /**

@@ -10,7 +10,7 @@ import { mat4, vec3, vec4, glMatrix } from "gl-matrix";
 import { Material } from "%COMMON/Material";
 import { Light } from "%COMMON/Light";
 import { TextureObject } from "%COMMON/TextureObject"
-import { Ray3D } from "./RayTracing";
+import { Ray3D, HitRecord } from "./RayTracing";
 
 /**
  * This is a scene graph renderer implementation that works specifically with WebGL.
@@ -94,14 +94,19 @@ export class ScenegraphRenderer {
         root.draw(this, modelView);
     }
 
-    public intersect(root: SGNode, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): boolean {
-        isHit = root.intersect(this, ray, modelView, isHit);
-        return isHit;
+    public getLights(root:SGNode, modelView: Stack<mat4>): Light[]{
+        return root.getLights(modelView);
+    }
+
+    public intersect(root: SGNode, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
+        let hitr: HitRecord;
+        [isHit, hitr] = root.intersect(this, ray, modelView, isHit);
+        return [isHit, hitr];
     }
 
 
-    public hit_sphere(center: vec4, radius: number,r: Ray3D): number {
-        //console.log("RAY DIRECTION: " + r.direction);
+    public hit_sphere(center: vec4, radius: number,r: Ray3D): [number, HitRecord] {
+
 
         let oc: vec4 = vec4.subtract(vec4.create(), r.position, center);
         let a: number = vec4.dot(r.direction, r.direction);
@@ -109,7 +114,7 @@ export class ScenegraphRenderer {
         let c: number = vec4.dot(oc, oc) - radius*radius;
         let discriminant: number = b*b - 4*a*c;
 
-        //console.log("Discriminant: " + b + ", " + a + ", " + c);
+        //console.log("Discriminant: " + discriminant);
 
         //let L1: number = Math.sqrt(vec4.squaredDistance(center,r.position));
         
@@ -132,16 +137,21 @@ export class ScenegraphRenderer {
         let int1: vec4 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, t1));
         //console.log("Intersection point: " + int1);
 
+        let normal: vec4 = vec4.subtract(vec4.create(), int1, center);
+
+        let hitr : HitRecord = new HitRecord(int1, normal);
+
         if (discriminant < 0) {
-            return -1.0;
+            return [-1.0,hitr];
         } else {
-            return (-b - Math.sqrt(discriminant) ) / (2.0*a);
+            return [(-b - Math.sqrt(discriminant) ) / (2.0*a),hitr];
         }
 
     }
 
-    public intersectNode(meshName: string, ray:Ray3D, transformation: mat4, isHit: boolean, info: TransformationInfo): boolean
+    public intersectNode(meshName: string, ray:Ray3D, transformation: mat4, isHitB: boolean, info: TransformationInfo, material: Material): [boolean, HitRecord]
     {
+        let hitr: HitRecord;
         if (this.meshRenderers.has(meshName)) {
             //console.log("intersecting node name: " + transformation);
 
@@ -150,18 +160,23 @@ export class ScenegraphRenderer {
 
             let objectType: string = this.meshRenderers.get(meshName).getName();
 
+            let isHit: number;
+            
+
             if(objectType == "sphere"){
-                if(this.hit_sphere([info.center[0],info.center[1],info.center[2],1], 0.67, ray) != -1)
+                [isHit, hitr] = this.hit_sphere([info.center[0],info.center[1],info.center[2],1], Math.tan(glMatrix.toRadian(30)), ray);
+                hitr.material = material;
+                if(isHit != -1)
                 {
-                    isHit = true;
+                    isHitB = true;
                 }
                 else
                 {
-                    isHit = false;
+                    isHitB = false;
                 }
             }
         }
-        return isHit;
+        return [isHitB, hitr];
     }
 
     private sendLightsToShader(lights: Light[]): void {

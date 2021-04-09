@@ -23,14 +23,13 @@ export class Ray3D{
 
 export class HitRecord{
 
-    public hitTime: number;
-    public intersection: vec3;
-    public normalHit: vec3;
+    public intersection: vec4;
+    public normalHit: vec4;
     public material: Material;
     public tex: TextureObject;
 
-    constructor(hitTime: number, intersection: vec3, normalHit: vec3, material: Material, tex: TextureObject){
-        this.hitTime = hitTime;
+    constructor(intersection: vec4, normalHit: vec4, material?: Material, tex?: TextureObject){
+        
         this.intersection = intersection;
         this.normalHit = normalHit;
         this.material = material;
