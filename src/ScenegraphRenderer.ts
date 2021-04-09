@@ -109,19 +109,41 @@ export class ScenegraphRenderer {
         let c: number = vec4.dot(oc, oc) - radius*radius;
         let discriminant: number = b*b - 4*a*c;
 
-        console.log("Discriminant: " + b + ", " + a + ", " + c);
+        //console.log("Discriminant: " + b + ", " + a + ", " + c);
+
+        //let L1: number = Math.sqrt(vec4.squaredDistance(center,r.position));
+        
+        let L: vec4 = vec4.sub(vec4.create(), center,r.position);
+        
+	    let tc: number = vec4.dot(L, r.direction);
+        //if ( tc < 0.0 ) return false;
+        
+        let d: number = vec4.dot(L,L) - (tc*tc);
+        //if ( d > s->radius) return false;
+        
+        //solve for t1c
+        let t1c: number = Math.sqrt( (radius * radius) - d );
+        //console.log("Intersection dis: " + t1c + " radius " + radius + " d: " + d);
+        //solve for intersection points
+        let t1: number = tc - t1c;
+        let t2: number = tc + t1c;
+
+        
+        let int1: vec4 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, t1));
+        //console.log("Intersection point: " + int1);
 
         if (discriminant < 0) {
             return -1.0;
         } else {
             return (-b - Math.sqrt(discriminant) ) / (2.0*a);
         }
+
     }
 
     public intersectNode(meshName: string, ray:Ray3D, transformation: mat4, isHit: boolean, info: TransformationInfo): boolean
     {
         if (this.meshRenderers.has(meshName)) {
-            //console.log("intersecting node name: " + this.meshRenderers.get(meshName).getName());
+            //console.log("intersecting node name: " + transformation);
 
             ray.direction = vec4.transformMat4(vec4.create(), ray.direction, mat4.invert(mat4.create(),transformation));
             ray.position = vec4.transformMat4(vec4.create(), ray.position, mat4.invert(mat4.create(),transformation));
@@ -129,7 +151,7 @@ export class ScenegraphRenderer {
             let objectType: string = this.meshRenderers.get(meshName).getName();
 
             if(objectType == "sphere"){
-                if(this.hit_sphere([info.center[0],info.center[1],info.center[2],1], 0.5, ray) != -1)
+                if(this.hit_sphere([info.center[0],info.center[1],info.center[2],1], 0.67, ray) != -1)
                 {
                     isHit = true;
                 }
