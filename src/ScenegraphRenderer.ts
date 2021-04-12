@@ -105,6 +105,42 @@ export class ScenegraphRenderer {
     }
 
 
+    public hit_box(r: Ray3D): [number, HitRecord] {
+        let boxMax: vec4  = [0.5,0.5,0.5, 0];
+        let boxMin: vec4  = [-0.5,-0.5,-0.5, 0];
+
+        let tMin: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMin, r.position),r.direction);
+        let tMax: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMax, r.position),r.direction);
+        
+        
+
+        let t1: vec4 = vec4.min(vec4.create(), tMin, tMax);
+        let t2: vec4 = vec4.max(vec4.create(),tMin, tMax);
+
+        let tNear: number = Math.max(Math.max(t1[0], t1[1]), t1[2]);
+        let tFar: number = Math.min(Math.min(t2[0], t2[1]), t2[2]);
+    
+        //console.log("Near: " + tNear);
+
+        if (tNear > tFar)
+            return [-1, new HitRecord(vec4.create(), vec4.create())];
+
+        let intr: vec4 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, tNear));
+        let norm: vec4 = vec4.create();
+
+        norm[3] = 1;
+        norm[0] = (Math.abs(intr[0])==0.5)?(intr[0]>0?1:-1):0;
+        norm[1] = (Math.abs(intr[1])==0.5)?(intr[1]>0?1:-1):0;
+        norm[2] = (Math.abs(intr[2])==0.5)?(intr[2]>0?1:-1):0;
+        
+        //console.log("Intersection: " + intr + " , norm: " +norm);
+
+        let hitr: HitRecord = new HitRecord(intr, norm);
+        return [tNear, hitr];
+
+    }
+
+
     public hit_sphere(center: vec4, radius: number,r: Ray3D): [number, HitRecord] {
 
 
@@ -164,7 +200,19 @@ export class ScenegraphRenderer {
             
 
             if(objectType == "sphere"){
-                [isHit, hitr] = this.hit_sphere([info.center[0],info.center[1],info.center[2],1], Math.tan(glMatrix.toRadian(30)), ray);
+                [isHit, hitr] = this.hit_sphere([0,0,0,1], 1, ray);
+                hitr.material = material;
+                if(isHit != -1)
+                {
+                    isHitB = true;
+                }
+                else
+                {
+                    isHitB = false;
+                }
+            }
+            else if (objectType == "box"){
+                [isHit, hitr] = this.hit_box(ray);
                 hitr.material = material;
                 if(isHit != -1)
                 {
