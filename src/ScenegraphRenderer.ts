@@ -123,7 +123,7 @@ export class ScenegraphRenderer {
         //console.log("Near: " + tNear);
 
         if (tNear > tFar)
-            return [-1, new HitRecord(vec4.create(), vec4.create())];
+            return [-1, new HitRecord(0, vec4.create(), vec4.create())];
 
         let intr: vec4 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, tNear));
         let norm: vec4 = vec4.create();
@@ -135,7 +135,7 @@ export class ScenegraphRenderer {
         
         //console.log("Intersection: " + intr + " , norm: " +norm);
 
-        let hitr: HitRecord = new HitRecord(intr, norm);
+        let hitr: HitRecord = new HitRecord(tNear, intr, norm);
         return [tNear, hitr];
 
     }
@@ -174,13 +174,21 @@ export class ScenegraphRenderer {
         //console.log("Intersection point: " + int1);
 
         let normal: vec4 = vec4.subtract(vec4.create(), int1, center);
+        //let hitr : HitRecord = new HitRecord(int1, normal);
 
-        let hitr : HitRecord = new HitRecord(int1, normal);
+        //==========
+        let t_1: number = (-b - Math.sqrt(discriminant) ) / (2.0*a);
+        let t_2: number = (-b + Math.sqrt(discriminant) ) / (2.0*a);
+        let t: number = Math.min(t_1, t_2);
+        int1 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, t));
+        normal = vec4.subtract(vec4.create(), int1, center);
+        let hitr : HitRecord = new HitRecord(t, int1, normal);
+        //==========
 
         if (discriminant < 0) {
             return [-1.0,hitr];
         } else {
-            return [(-b - Math.sqrt(discriminant) ) / (2.0*a),hitr];
+            return [1,hitr];
         }
 
     }

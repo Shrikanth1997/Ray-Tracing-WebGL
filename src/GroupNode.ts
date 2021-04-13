@@ -67,8 +67,35 @@ export class GroupNode extends SGNode {
 
     public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
         let hits: boolean;
-        let hitr: HitRecord
-        this.children.forEach(child => [hits,hitr] = child.intersect(context, ray, modelView, isHit));
+        let hitr: HitRecord;
+        let firstHit: boolean = true;
+        hits = false;
+
+        for(let i: number = 0; i < this.children.length; i++)
+        {
+            let hits_temp: boolean;
+            let hitr_temp: HitRecord;
+
+            [hits_temp,hitr_temp] = this.children[i].intersect(context, ray, modelView, isHit);
+            if(hits_temp == true)
+            {
+                hits = true;
+                if(firstHit == true)
+                {
+                    hitr = hitr_temp;
+                    firstHit = false;
+                }
+                else{
+                    // Choose the closest hit
+                    if(hitr_temp.rayT < hitr.rayT)
+                    {
+                        hitr = hitr_temp;
+                    }
+                }
+
+            }
+        }
+        //this.children.forEach(child => [hits,hitr] = child.intersect(context, ray, modelView, isHit));
 
         return [hits, hitr];
     }

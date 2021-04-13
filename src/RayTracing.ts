@@ -25,11 +25,13 @@ export class HitRecord{
 
     public intersection: vec4;
     public normalHit: vec4;
+    public rayT: number;
     public material: Material;
     public tex: TextureObject;
 
-    constructor(intersection: vec4, normalHit: vec4, material?: Material, tex?: TextureObject){
+    constructor(rayT: number, intersection: vec4, normalHit: vec4, material?: Material, tex?: TextureObject){
         
+        this.rayT = rayT;
         this.intersection = intersection;
         this.normalHit = normalHit;
         this.material = material;
@@ -40,8 +42,317 @@ export class HitRecord{
 
 export class Scene{
 
-
     public createSphere(): string{
+
+        return `
+        {
+        "scaleinstances": "false",
+        "instances": [
+            {
+            "name": "sphere",
+            "path": "models/sphere.obj"
+            },
+            {
+            "name": "box",
+            "path": "models/box.obj"
+            },
+            {
+            "name": "cylinder",
+            "path": "models/cylinder.obj"
+            },
+            {
+            "name": "cone",
+            "path": "models/cone.obj"
+            }
+        ],
+        "images": [
+            {
+            "name": "white",
+            "path": "textures/white.png"
+            }
+        ],
+        "root": {
+            "type": "group",
+            "name": "Root of scene graph",
+            "lights": [
+              {
+                "ambient": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "diffuse": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "specular": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "position": [
+                  0.0,
+                  100.0,
+                  0.0,
+                  1.0
+                ],
+                "spotdirection": [
+                  0.0,
+                  -1.0,
+                  0.0,
+                  0.0
+                ],
+                "spotcutoff": 25.0
+              }
+            ],
+            "children": [
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              10.0,
+                              0.0,
+                              -10.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                5.0,
+                                5.0,
+                                5.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "sphere",
+                        "material": {
+                            "ambient": [
+                                0.4,
+                                0.2,
+                                0.6,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                }
+            ]
+        }
+    }
+    `;
+
+    }
+
+    
+
+    public createSphere_2(): string{
+
+        return `
+        {
+        "scaleinstances": "false",
+        "instances": [
+            {
+            "name": "sphere",
+            "path": "models/sphere.obj"
+            },
+            {
+            "name": "box",
+            "path": "models/box.obj"
+            },
+            {
+            "name": "cylinder",
+            "path": "models/cylinder.obj"
+            },
+            {
+            "name": "cone",
+            "path": "models/cone.obj"
+            }
+        ],
+        "images": [
+            {
+            "name": "white",
+            "path": "textures/white.png"
+            }
+        ],
+        "root": {
+            "type": "group",
+            "name": "Root of scene graph",
+            "lights": [
+              {
+                "ambient": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "diffuse": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "specular": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "position": [
+                  0.0,
+                  100.0,
+                  0.0,
+                  1.0
+                ],
+                "spotdirection": [
+                  0.0,
+                  -1.0,
+                  0.0,
+                  0.0
+                ],
+                "spotcutoff": 25.0
+              }
+            ],
+            "children": [
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              10.0,
+                              0.0,
+                              -10.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                5.0,
+                                5.0,
+                                5.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "sphere",
+                        "material": {
+                            "ambient": [
+                                0.4,
+                                0.2,
+                                0.6,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                },
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              0.0,
+                              0.0,
+                              -10.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                5.0,
+                                5.0,
+                                5.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "sphere",
+                        "texture" : "white",
+                        "material": {
+                            "ambient": [
+                                0.4,
+                                0.2,
+                                0.6,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                }
+            ]
+        }
+    }
+    `;
+
+    }
+
+
+    public createBox(): string{
 
         return `
         {
