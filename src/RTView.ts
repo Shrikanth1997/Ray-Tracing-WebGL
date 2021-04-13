@@ -158,7 +158,7 @@ export class RTView {
             if(isHit==true)
             {
                 //console.log("hit");
-                let col: vec4 = vec4.scale(vec4.create(),this.shadeColor(rayHit, modelView, lights),255);
+                let col: vec4 = vec4.scale(vec4.create(),this.shadeColor(ray, rayHit, modelView, lights),255);
                 //let col: vec3 = this.shadeColor(rayHit, modelView, lights)
                 return [col[0],col[1],col[2],255];
                 //return [100,50,150, 0];
@@ -178,14 +178,15 @@ export class RTView {
         return vec3.subtract(vec3.create(), v , vec3.scale(vec3.create(), n, 2*vec3.dot(v,n)));
     }
     
-    public shadeColor(rayHit: HitRecord, modelview: Stack<mat4>, light: Light[] ): vec4 {
+    public shadeColor(ray: Ray3D, rayHit: HitRecord, modelview: Stack<mat4>, light: Light[] ): vec4 {
 
         
         // Pass in these values
         let fNormal:vec3 = [rayHit.normalHit[0],rayHit.normalHit[1],rayHit.normalHit[2]];
-        let fPosition:vec3 = [rayHit.intersection[0],rayHit.intersection[1],rayHit.intersection[2]];
+        let fPosition_temp:vec4 = vec4.add(vec4.create(), ray.position, vec4.scale(vec4.create(), ray.direction, rayHit.rayT));//[rayHit.intersection[0],rayHit.intersection[1],rayHit.intersection[2]];
         let fTexCoord:vec3;
-
+        let fPosition: vec3 = [fPosition_temp[0], fPosition_temp[1], fPosition_temp[2]];
+        
         //console.log("normals: " + fNormal);
         
         let lightVec:vec3 = vec3.create();

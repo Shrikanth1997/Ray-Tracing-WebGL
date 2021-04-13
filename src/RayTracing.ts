@@ -309,7 +309,7 @@ export class Scene{
                     ],
                     "child": {
                         "type": "object",
-                        "instanceof": "sphere",
+                        "instanceof": "box",
                         "texture" : "white",
                         "material": {
                             "ambient": [

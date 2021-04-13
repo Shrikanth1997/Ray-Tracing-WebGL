@@ -210,6 +210,11 @@ export class ScenegraphRenderer {
             if(objectType == "sphere"){
                 [isHit, hitr] = this.hit_sphere([0,0,0,1], 1, ray);
                 hitr.material = material;
+                //the normal matrix = inverse transpose of modelview
+                let normalMatrix: mat4 = mat4.clone(transformation);
+                mat4.transpose(normalMatrix, normalMatrix);
+                mat4.invert(normalMatrix, normalMatrix);
+                hitr.normalHit = vec4.transformMat4(hitr.normalHit, hitr.normalHit, normalMatrix);
                 if(isHit != -1)
                 {
                     isHitB = true;
