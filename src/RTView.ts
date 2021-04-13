@@ -225,9 +225,9 @@ export class RTView {
         
                 let spotDirection: vec3 = vec3.normalize(vec3.create(), [light[i].getSpotDirection()[0], light[i].getSpotDirection()[1],light[i].getSpotDirection()[2]]);
                 
-                //console.log("Spots: " + vec3.dot(spotDirection,vec3.negate(lightVec,lightVec)) + " , " + light[i].getSpotCutoff()/200);
+                //console.log("Spots: " + vec3.dot(spotDirection,vec3.negate(lightVec,lightVec)) + " , " + Math.cos(light[i].getSpotCutoff()));
 
-                //if (vec3.dot(spotDirection,vec3.negate(lightVec,lightVec))>light[i].getSpotCutoff()) {
+                if (vec3.dot(spotDirection,vec3.negate(lightVec,lightVec))>Math.cos(glMatrix.toRadian(light[i].getSpotCutoff()))) {
                     
                     ambient = vec3.multiply(ambient, rayHit.material.getAmbient(),light[i].getAmbient() );
                     diffuse = vec3.multiply(diffuse, rayHit.material.getDiffuse(), vec3.mul(vec3.create(), light[i].getDiffuse(),[Math.max(nDotL,0.0),Math.max(nDotL,0.0),Math.max(nDotL,0.0)]));
@@ -242,7 +242,7 @@ export class RTView {
                     final = vec3.add(final, final, diffuse);
                     final = vec3.add(final, final, ambient);
                     result = vec4.add(result, result,   [final[0], final[1], final[2],1]);  
-                //}  
+                }  
             }
            
         

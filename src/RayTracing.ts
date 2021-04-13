@@ -103,7 +103,7 @@ export class Scene{
                   0.0,
                   0.0
                 ],
-                "spotcutoff": 25.0
+                "spotcutoff": 60
               }
             ],
             "children": [
@@ -113,7 +113,7 @@ export class Scene{
                         {
                             "translate": [
                               10.0,
-                              0.0,
+                              -10.0,
                               -10.0
                             ]
                         },
@@ -127,7 +127,7 @@ export class Scene{
                     ],
                     "child": {
                         "type": "object",
-                        "instanceof": "sphere",
+                        "instanceof": "box",
                         "material": {
                             "ambient": [
                                 0.4,
@@ -231,7 +231,7 @@ export class Scene{
                   0.0,
                   0.0
                 ],
-                "spotcutoff": 25.0
+                "spotcutoff": 60
               }
             ],
             "children": [
@@ -240,16 +240,16 @@ export class Scene{
                     "transform": [
                         {
                             "translate": [
-                              10.0,
+                              30.0,
                               0.0,
-                              -10.0
+                              30.0
                             ]
                         },
                         {
                             "scale": [
-                                5.0,
-                                5.0,
-                                5.0
+                                15.0,
+                                15.0,
+                                15.0
                             ]
                         }
                     ],
@@ -294,9 +294,65 @@ export class Scene{
                     "transform": [
                         {
                             "translate": [
+                              20.0,
+                              -10.0,
+                              15.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                15,
+                                15,
+                                15
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "box",
+                        "texture" : "white",
+                        "material": {
+                            "ambient": [
+                                0.8,
+                                0.2,
+                                0.3,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                },
+
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
                               0.0,
                               0.0,
-                              -10.0
+                              0.0
                             ]
                         },
                         {
@@ -309,13 +365,12 @@ export class Scene{
                     ],
                     "child": {
                         "type": "object",
-                        "instanceof": "box",
-                        "texture" : "white",
+                        "instanceof": "sphere",
                         "material": {
                             "ambient": [
-                                0.4,
-                                0.2,
-                                0.6,
+                                0.1,
+                                0.8,
+                                0.8,
                                 1.0
                             ],
                             "diffuse": [

@@ -196,19 +196,23 @@ export class ScenegraphRenderer {
     public intersectNode(meshName: string, ray:Ray3D, transformation: mat4, isHitB: boolean, info: TransformationInfo, material: Material): [boolean, HitRecord]
     {
         let hitr: HitRecord;
+        let ray_copy: Ray3D = new Ray3D(ray.position, ray.direction);
+
         if (this.meshRenderers.has(meshName)) {
             //console.log("intersecting node name: " + transformation);
 
-            ray.direction = vec4.transformMat4(vec4.create(), ray.direction, mat4.invert(mat4.create(),transformation));
-            ray.position = vec4.transformMat4(vec4.create(), ray.position, mat4.invert(mat4.create(),transformation));
+            ray_copy.direction = vec4.transformMat4(vec4.create(), ray_copy.direction, mat4.invert(mat4.create(),transformation));
+            ray_copy.position = vec4.transformMat4(vec4.create(), ray_copy.position, mat4.invert(mat4.create(),transformation));
 
             let objectType: string = this.meshRenderers.get(meshName).getName();
 
             let isHit: number;
             
+            //let ray_temp: Ray3D = new Ray3D(ray.position, ray.direction);
 
             if(objectType == "sphere"){
-                [isHit, hitr] = this.hit_sphere([0,0,0,1], 1, ray);
+                let ray_temp: Ray3D = new Ray3D(ray_copy.position, ray_copy.direction);
+                [isHit, hitr] = this.hit_sphere([0,0,0,1], 1, ray_copy);
                 hitr.material = material;
                 //the normal matrix = inverse transpose of modelview
                 let normalMatrix: mat4 = mat4.clone(transformation);
@@ -225,7 +229,8 @@ export class ScenegraphRenderer {
                 }
             }
             else if (objectType == "box"){
-                [isHit, hitr] = this.hit_box(ray);
+                let ray_temp: Ray3D = new Ray3D(ray_copy.position, ray_copy.direction);
+                [isHit, hitr] = this.hit_box(ray_copy);
                 hitr.material = material;
                 if(isHit != -1)
                 {
@@ -236,6 +241,7 @@ export class ScenegraphRenderer {
                     isHitB = false;
                 }
             }
+
         }
         return [isHitB, hitr];
     }

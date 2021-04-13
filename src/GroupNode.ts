@@ -76,22 +76,25 @@ export class GroupNode extends SGNode {
             let hits_temp: boolean;
             let hitr_temp: HitRecord;
 
+            
             [hits_temp,hitr_temp] = this.children[i].intersect(context, ray, modelView, isHit);
+            
             if(hits_temp == true)
             {
                 hits = true;
-                if(firstHit == true)
+                hitr = hitr_temp;
+                /*if(firstHit == true)
                 {
                     hitr = hitr_temp;
                     firstHit = false;
-                }
-                else{
+                }*/
+                /*else{
                     // Choose the closest hit
                     if(hitr_temp.rayT < hitr.rayT)
                     {
                         hitr = hitr_temp;
                     }
-                }
+                }*/
 
             }
         }
