@@ -10,7 +10,7 @@ import { mat4, vec3, vec4, glMatrix } from "gl-matrix";
 import { Material } from "%COMMON/Material";
 import { Light } from "%COMMON/Light";
 import { TextureObject } from "%COMMON/TextureObject"
-import { Ray3D, HitRecord } from "./RayTracing";
+import { Ray3D, HitRecord, Bounds } from "./RayTracing";
 
 /**
  * This is a scene graph renderer implementation that works specifically with WebGL.
@@ -333,6 +333,60 @@ export class ScenegraphRenderer {
 
 
             this.meshRenderers.get(meshName).draw(this.shaderLocations);
+        }
+    }
+
+    public BVH(root: SGNode, modelView: Stack<mat4>)
+    {
+        root.BVH(this, modelView);
+    }
+
+    public createBVH(meshName: string, modelView: mat4, info: TransformationInfo): Bounds
+    {
+        if (this.meshRenderers.has(meshName)) {
+
+            let objectType: string = this.meshRenderers.get(meshName).getName();
+
+            let boundBox: Bounds;
+            if(objectType == "box")
+            {
+                let boxMax: vec3  = vec3.create();
+                boxMax = [0.5,0.5,0.5];
+                let boxMin: vec3  = vec3.create();
+                boxMin = [-0.5,-0.5,-0.5];
+
+                let min: vec3 = vec3.create();
+                let max: vec3 = vec3.create();
+                // Min and Max of the box in view coordinates
+                min = vec3.transformMat4(min, boxMin, modelView);
+                max = vec3.transformMat4(max, boxMax, modelView);
+
+                boundBox = new Bounds(min, max);
+
+                //console.log("BoxBounds Min: " + boundBox.min[0], boundBox.min[1], boundBox.min[2]);
+                //console.log("BoxBounds Max: " + boundBox.max[0], boundBox.max[1], boundBox.max[2]);
+            }
+
+            if(objectType == "sphere")
+            {
+                let sphereC: vec3 = vec3.create(); 
+                sphereC = [0,0,0];
+                let sphereR: number = 1;
+
+                let center: vec3 = vec3.create();
+                center = vec3.transformMat4(center, sphereC, modelView);
+                let radius: number = info.radius;
+
+                let min: vec3 = [center[0] - radius, center[1] - radius, center[2] - radius];
+                let max: vec3 = [center[0] + radius, center[1] + radius, center[2] + radius];
+
+                boundBox = new Bounds(min, max);
+
+                //console.log("SphereBounds Min: " + boundBox.min[0], boundBox.min[1], boundBox.min[2]);
+                //console.log("SphereBounds Max: " + boundBox.max[0], boundBox.max[1], boundBox.max[2]);
+            }
+
+            return boundBox;
         }
     }
 }

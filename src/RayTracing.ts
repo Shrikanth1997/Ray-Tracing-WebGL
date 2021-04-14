@@ -40,6 +40,44 @@ export class HitRecord{
     }
 }
 
+export class Bounds{
+    public min: vec3;
+    public max: vec3;
+
+    constructor(min: vec3, max: vec3)
+    {
+        this.min = min;
+        this.max = max;
+    }
+
+    public expand(min: vec3, max: vec3): void
+    {
+        this.min = vec3.min(this.min, this.min, min);
+        this.max = vec3.max(this.max, this.max ,max);
+    }
+
+    public intersect(ray: Ray3D): boolean
+    {
+        let position: vec3 = vec3.create();
+        position = [ray.position[0], ray.position[1], ray.position[2]];
+        let dir: vec3 = vec3.create();
+        dir = [ray.direction[0], ray.direction[1], ray.direction[2]];
+        let tMin: vec3 = vec3.divide(vec3.create(), vec3.subtract(vec3.create(), this.min, position), dir);
+        let tMax: vec3 = vec3.divide(vec3.create(), vec3.subtract(vec3.create(), this.max, position),dir);
+
+        let t1: vec3 = vec3.min(vec3.create(), tMin, tMax);
+        let t2: vec3 = vec3.max(vec3.create(),tMin, tMax);
+
+        let tNear: number = Math.max(Math.max(t1[0], t1[1]), t1[2]);
+        let tFar: number = Math.min(Math.min(t2[0], t2[1]), t2[2]);
+
+        if(tNear > tFar)
+            return false;
+
+        return true;
+    }
+}
+
 export class Scene{
 
     public createSphere(): string{

@@ -1,11 +1,11 @@
 import { SGNode } from "./SGNode"
-import { mat4 } from "gl-matrix";
+import { mat4, vec4 } from "gl-matrix";
 import { Scenegraph } from "./Scenegraph";
 import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Light } from "%COMMON/Light";
-import { HitRecord, Ray3D } from "./RayTracing";
+import { HitRecord, Ray3D, Bounds } from "./RayTracing";
 
 
 /**
@@ -53,6 +53,23 @@ export class TransformNode extends SGNode {
      */
     public getNumLights(): number {
         return super.getNumLights() + this.child.getNumLights();
+    }
+
+    public BVH(context: ScenegraphRenderer, modelView: Stack<mat4>): void
+    {
+        modelView.push(mat4.clone(modelView.peek()));
+        mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
+        mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
+
+        this.boundBox = new Bounds([Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY], [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY]);
+
+        if(this.child != null)
+        {
+            this.child.BVH(context, modelView);
+            this.boundBox.expand(this.child.boundBox.min, this.child.boundBox.max);
+        }
+
+        modelView.pop();
     }
 
     /**

@@ -112,6 +112,7 @@ export class RTView {
             }*/
 
             let lights: Light[] = this.scenegraph.getLights(this.modelview);
+            this.scenegraph.BVH(this.modelview);
             //console.log("Lights: " + lights[0].getAmbient());
 
             for(let y: number =0;y<=H;y=y+1){

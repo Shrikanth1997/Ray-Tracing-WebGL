@@ -5,7 +5,7 @@ import { Stack } from "%COMMON/Stack";
 import { mat4, vec4, vec3 } from "gl-matrix";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Light } from "%COMMON/Light";
-import { Ray3D, HitRecord } from "./RayTracing";
+import { Ray3D, HitRecord, Bounds } from "./RayTracing";
 
 /**
  * This class represents a group node in the scenegraph. A group node is simply a logical grouping
@@ -65,11 +65,35 @@ export class GroupNode extends SGNode {
         this.children.forEach(child => child.draw(context, modelView));
     }
 
+    public BVH(context: ScenegraphRenderer, modelView: Stack<mat4>): void
+    {
+        let first: boolean = true;
+        for(let i: number = 0; i < this.children.length; i++)
+        {
+            this.children[i].BVH(context, modelView);
+
+            if(first == true)
+            {
+                this.boundBox = new Bounds(this.children[i].boundBox.min, this.children[i].boundBox.max);
+                first = false;
+            }
+            else
+            {
+                this.boundBox.expand(this.children[i].boundBox.min, this.children[i].boundBox.max); 
+            }
+
+        }
+    }
+
     public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
         let hits: boolean;
         let hitr: HitRecord;
         let firstHit: boolean = true;
         hits = false;
+
+        // If the ray does not intersect with the Bounding Box, return. Do not traverse the child nodes.
+        if(this.boundBox.intersect(ray) == false)
+            return [false, hitr];
 
         for(let i: number = 0; i < this.children.length; i++)
         {
