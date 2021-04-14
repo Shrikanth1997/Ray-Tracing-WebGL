@@ -5,7 +5,7 @@ import { Material } from "%COMMON/Material";
 import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { IVertexData } from "%COMMON/IVertexData";
-import { Ray3D, HitRecord } from "./RayTracing";
+import { Ray3D, HitRecord, Bounds } from "./RayTracing";
 
 
 /**
@@ -42,6 +42,8 @@ export class LeafNode extends SGNode {
     protected textureName: string;
 
     private LeafTransformInfo: TransformationInfo;
+
+    //public boundBox: Bounds;
 
     public constructor(instanceOf: string, graph: Scenegraph<IVertexData>, name: string) {
         super(graph, name);
@@ -100,6 +102,14 @@ export class LeafNode extends SGNode {
     public draw(context: ScenegraphRenderer, modelView: Stack<mat4>): void {
         if (this.meshName.length > 0) {
             context.drawMesh(this.meshName, this.material, this.textureName, modelView.peek());
+        }
+    }
+
+    public BVH(context: ScenegraphRenderer, modelView: Stack<mat4>): void
+    {
+        if(this.meshName.length > 0)
+        {
+            this.boundBox = context.createBVH(this.meshName, modelView.peek(), this.LeafTransformInfo);
         }
     }
 

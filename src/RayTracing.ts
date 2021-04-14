@@ -40,6 +40,44 @@ export class HitRecord{
     }
 }
 
+export class Bounds{
+    public min: vec3;
+    public max: vec3;
+
+    constructor(min: vec3, max: vec3)
+    {
+        this.min = min;
+        this.max = max;
+    }
+
+    public expand(min: vec3, max: vec3): void
+    {
+        this.min = vec3.min(this.min, this.min, min);
+        this.max = vec3.max(this.max, this.max ,max);
+    }
+
+    public intersect(ray: Ray3D): boolean
+    {
+        let position: vec3 = vec3.create();
+        position = [ray.position[0], ray.position[1], ray.position[2]];
+        let dir: vec3 = vec3.create();
+        dir = [ray.direction[0], ray.direction[1], ray.direction[2]];
+        let tMin: vec3 = vec3.divide(vec3.create(), vec3.subtract(vec3.create(), this.min, position), dir);
+        let tMax: vec3 = vec3.divide(vec3.create(), vec3.subtract(vec3.create(), this.max, position),dir);
+
+        let t1: vec3 = vec3.min(vec3.create(), tMin, tMax);
+        let t2: vec3 = vec3.max(vec3.create(),tMin, tMax);
+
+        let tNear: number = Math.max(Math.max(t1[0], t1[1]), t1[2]);
+        let tFar: number = Math.min(Math.min(t2[0], t2[1]), t2[2]);
+
+        if(tNear > tFar)
+            return false;
+        
+        return true;
+    }
+}
+
 export class Scene{
 
     public createSphere(): string{
@@ -168,7 +206,187 @@ export class Scene{
 
     }
 
-    
+    public check(): string{
+
+        return `
+        {
+        "scaleinstances": "false",
+        "instances": [
+            {
+            "name": "sphere",
+            "path": "models/sphere.obj"
+            },
+            {
+            "name": "box",
+            "path": "models/box.obj"
+            },
+            {
+            "name": "cylinder",
+            "path": "models/cylinder.obj"
+            },
+            {
+            "name": "cone",
+            "path": "models/cone.obj"
+            }
+        ],
+        "images": [
+            {
+            "name": "white",
+            "path": "textures/white.png"
+            }
+        ],
+        "root": {
+            "type": "group",
+            "name": "Root of scene graph",
+            "lights": [
+              {
+                "ambient": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "diffuse": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "specular": [
+                  0.8,
+                  0.8,
+                  0.8
+                ],
+                "position": [
+                  0.0,
+                  100.0,
+                  0.0,
+                  1.0
+                ],
+                "spotdirection": [
+                  0.0,
+                  -1.0,
+                  0.0,
+                  0.0
+                ],
+                "spotcutoff": 25.0
+              }
+            ],
+            "children": [
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              -10.0,
+                              5.0,
+                              -10.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                5.0,
+                                5.0,
+                                5.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "sphere",
+                        "material": {
+                            "ambient": [
+                                0.4,
+                                0.2,
+                                0.6,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                },
+
+
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              10.0,
+                              -10.0,
+                              0.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                5.0,
+                                5.0,
+                                5.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "box",
+                        "material": {
+                            "ambient": [
+                                0.4,
+                                0.2,
+                                0.6,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                }
+            ]
+        }
+    }
+    `;
+
+    }
 
     public createSphere_2(): string{
 

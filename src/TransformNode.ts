@@ -1,11 +1,11 @@
 import { SGNode } from "./SGNode"
-import { mat4 } from "gl-matrix";
+import { mat4, vec4 } from "gl-matrix";
 import { Scenegraph } from "./Scenegraph";
 import { Stack } from "%COMMON/Stack";
 import { ScenegraphRenderer } from "./ScenegraphRenderer";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Light } from "%COMMON/Light";
-import { HitRecord, Ray3D } from "./RayTracing";
+import { HitRecord, Ray3D, Bounds } from "./RayTracing";
 
 
 /**
@@ -21,6 +21,8 @@ export class TransformNode extends SGNode {
          */
     protected transform: mat4;
     protected animationTransform: mat4;
+
+    //public boundBox: Bounds;
 
     /**
      * A reference to its only child
@@ -135,12 +137,35 @@ export class TransformNode extends SGNode {
         modelView.pop();
     }
 
+    public BVH(context: ScenegraphRenderer, modelView: Stack<mat4>): void
+    {
+        modelView.push(mat4.clone(modelView.peek()));
+        mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
+        mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
+
+        this.boundBox = new Bounds([Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY], [Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY]);
+
+        if(this.child != null)
+        {
+            this.child.BVH(context, modelView);
+            this.boundBox.expand(this.child.boundBox.min, this.child.boundBox.max);
+        }
+
+        modelView.pop();
+    }
+
     public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
         modelView.push(mat4.clone(modelView.peek()));
         mat4.multiply(modelView.peek(), modelView.peek(), this.animationTransform);
         mat4.multiply(modelView.peek(), modelView.peek(), this.transform);
 
         let hitr: HitRecord;
+
+        /*if(this.boundBox.intersect(ray) == false)
+        {
+            return [false, new HitRecord(0, vec4.create(), vec4.create())];
+        }*/
+
         if (this.child != null)
             [isHit, hitr] = this.child.intersect(context, ray, modelView, isHit);
         modelView.pop();

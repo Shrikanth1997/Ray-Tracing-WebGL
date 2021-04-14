@@ -5,7 +5,7 @@ import { Stack } from "%COMMON/Stack";
 import { mat4, vec4, vec3 } from "gl-matrix";
 import { IVertexData } from "%COMMON/IVertexData";
 import { Light } from "%COMMON/Light";
-import { Ray3D, HitRecord } from "./RayTracing";
+import { Ray3D, HitRecord, Bounds } from "./RayTracing";
 
 /**
  * This class represents a group node in the scenegraph. A group node is simply a logical grouping
@@ -19,6 +19,8 @@ export class GroupNode extends SGNode {
      * A list of its children
      */
     protected children: SGNode[];
+
+    //public boundBox: Bounds;
 
     public constructor(graph: Scenegraph<IVertexData>, name: string) {
         super(graph, name);
@@ -65,11 +67,40 @@ export class GroupNode extends SGNode {
         this.children.forEach(child => child.draw(context, modelView));
     }
 
+    public BVH(context: ScenegraphRenderer, modelView: Stack<mat4>): void
+    {
+        let first: boolean = true;
+        for(let i: number = 0; i < this.children.length; i++)
+        {
+            this.children[i].BVH(context, modelView);
+            
+            if(first == true)
+            {
+                this.boundBox = new Bounds(this.children[i].boundBox.min, this.children[i].boundBox.max);
+                first = false;
+            }
+            else
+            {
+                this.boundBox.expand(this.children[i].boundBox.min, this.children[i].boundBox.max); 
+            }
+
+        }
+
+        //console.log("NodeBounds Min: " + this.boundBox.min[0], this.boundBox.min[1], this.boundBox.min[2]);
+        //console.log("Nodeounds Max: " + this.boundBox.max[0], this.boundBox.max[1], this.boundBox.max[2]);
+    }
+
     public intersect(context: ScenegraphRenderer, ray: Ray3D, modelView: Stack<mat4>, isHit: boolean): [boolean, HitRecord] {
         let hits: boolean;
         let hitr: HitRecord;
         let firstHit: boolean = true;
         hits = false;
+
+        //console.log ("ray: " + ray + " output: " + this.boundBox.intersect(ray));
+        if(this.boundBox.intersect(ray) == false)
+            return [false, hitr];
+            
+            //return [false, new HitRecord(0, vec4.create(), vec4.create())];
 
         for(let i: number = 0; i < this.children.length; i++)
         {
@@ -79,19 +110,20 @@ export class GroupNode extends SGNode {
             [hits_temp,hitr_temp] = this.children[i].intersect(context, ray, modelView, isHit);
             if(hits_temp == true)
             {
-                hits = true;
-                if(firstHit == true)
+                //if(firstHit == true)
                 {
+                    hits = true;
                     hitr = hitr_temp;
                     firstHit = false;
                 }
-                else{
+                /*else{
                     // Choose the closest hit
-                    if(hitr_temp.rayT < hitr.rayT)
+                    if((hitr_temp.rayT < hitr.rayT) )
                     {
+                        hits = true;
                         hitr = hitr_temp;
                     }
-                }
+                }*/
 
             }
         }

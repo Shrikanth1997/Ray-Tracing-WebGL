@@ -25,7 +25,7 @@ export class Controller implements Features {
         let simpleScene = new Scene;
     
         return new Promise<void>((resolve) => {
-          ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere_2())
+          ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.check())
             .then((s: Scenegraph<VertexPNT>) => {
               this.raytracerView.check = 10;
               this.raytracerView.scenegraph = s;

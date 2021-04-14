@@ -10,7 +10,7 @@ import { mat4, vec3, vec4, glMatrix } from "gl-matrix";
 import { Material } from "%COMMON/Material";
 import { Light } from "%COMMON/Light";
 import { TextureObject } from "%COMMON/TextureObject"
-import { Ray3D, HitRecord } from "./RayTracing";
+import { Ray3D, HitRecord, Bounds } from "./RayTracing";
 
 /**
  * This is a scene graph renderer implementation that works specifically with WebGL.
@@ -104,15 +104,17 @@ export class ScenegraphRenderer {
         return [isHit, hitr];
     }
 
+    public BVH(root: SGNode, modelView: Stack<mat4>)
+    {
+        root.BVH(this, modelView);
+    }
 
-    public hit_box(r: Ray3D): [number, HitRecord] {
-        let boxMax: vec4  = [0.5,0.5,0.5, 0];
-        let boxMin: vec4  = [-0.5,-0.5,-0.5, 0];
+    /*public hit_box(r: Ray3D): [number, HitRecord] {
+        let boxMax: vec4  = [0.5,0.5,0.5, 1];
+        let boxMin: vec4  = [-0.5,-0.5,-0.5, 1];
 
-        let tMin: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMin, r.position),r.direction);
-        let tMax: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMax, r.position),r.direction);
-        
-        
+        let t0: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMin, r.position),r.direction);
+        let t1: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMax, r.position),r.direction);
 
         let t1: vec4 = vec4.min(vec4.create(), tMin, tMax);
         let t2: vec4 = vec4.max(vec4.create(),tMin, tMax);
@@ -126,9 +128,44 @@ export class ScenegraphRenderer {
             return [-1, new HitRecord(0, vec4.create(), vec4.create())];
 
         let intr: vec4 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, tNear));
+        intr[3] = 1;
         let norm: vec4 = vec4.create();
 
-        norm[3] = 1;
+        norm[3] = 0;
+        norm[0] = (Math.abs(intr[0])==0.5)?(intr[0]>0?1:-1):0;
+        norm[1] = (Math.abs(intr[1])==0.5)?(intr[1]>0?1:-1):0;
+        norm[2] = (Math.abs(intr[2])==0.5)?(intr[2]>0?1:-1):0;
+        
+        //console.log("Intersection: " + intr + " , norm: " +norm);
+
+        let hitr: HitRecord = new HitRecord(tNear, intr, norm);
+        return [tNear, hitr];
+
+    }*/
+
+    public hit_box(r: Ray3D): [number, HitRecord] {
+        let boxMax: vec4  = [0.5,0.5,0.5, 1];
+        let boxMin: vec4  = [-0.5,-0.5,-0.5, 1];
+
+        let tMin: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMin, r.position),r.direction);
+        let tMax: vec4 = vec4.divide(vec4.create(), vec4.subtract(vec4.create(), boxMax, r.position),r.direction);
+
+        let t1: vec4 = vec4.min(vec4.create(), tMin, tMax);
+        let t2: vec4 = vec4.max(vec4.create(),tMin, tMax);
+
+        let tNear: number = Math.max(Math.max(t1[0], t1[1]), t1[2]);
+        let tFar: number = Math.min(Math.min(t2[0], t2[1]), t2[2]);
+    
+        //console.log("Near: " + tNear);
+
+        if (tNear > tFar)
+            return [-1, new HitRecord(0, vec4.create(), vec4.create())];
+
+        let intr: vec4 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, tNear));
+        intr[3] = 1;
+        let norm: vec4 = vec4.create();
+
+        norm[3] = 0;
         norm[0] = (Math.abs(intr[0])==0.5)?(intr[0]>0?1:-1):0;
         norm[1] = (Math.abs(intr[1])==0.5)?(intr[1]>0?1:-1):0;
         norm[2] = (Math.abs(intr[2])==0.5)?(intr[2]>0?1:-1):0;
@@ -181,6 +218,7 @@ export class ScenegraphRenderer {
         let t_2: number = (-b + Math.sqrt(discriminant) ) / (2.0*a);
         let t: number = Math.min(t_1, t_2);
         int1 = vec4.add(vec4.create(), r.position, vec4.scale(vec4.create(), r.direction, t));
+        int1[3] = 1;
         normal = vec4.subtract(vec4.create(), int1, center);
         let hitr : HitRecord = new HitRecord(t, int1, normal);
         //==========
@@ -215,6 +253,9 @@ export class ScenegraphRenderer {
                 mat4.transpose(normalMatrix, normalMatrix);
                 mat4.invert(normalMatrix, normalMatrix);
                 hitr.normalHit = vec4.transformMat4(hitr.normalHit, hitr.normalHit, normalMatrix);
+
+                //console.log(transformation);
+
                 if(isHit != -1)
                 {
                     isHitB = true;
@@ -227,6 +268,11 @@ export class ScenegraphRenderer {
             else if (objectType == "box"){
                 [isHit, hitr] = this.hit_box(ray);
                 hitr.material = material;
+                let normalMatrix: mat4 = mat4.clone(transformation);
+                mat4.transpose(normalMatrix, normalMatrix);
+                mat4.invert(normalMatrix, normalMatrix);
+                hitr.normalHit = vec4.transformMat4(hitr.normalHit, hitr.normalHit, normalMatrix);
+                
                 if(isHit != -1)
                 {
                     isHitB = true;
@@ -238,6 +284,55 @@ export class ScenegraphRenderer {
             }
         }
         return [isHitB, hitr];
+    }
+
+    public createBVH(meshName: string, modelView: mat4, info: TransformationInfo): Bounds
+    {
+        if (this.meshRenderers.has(meshName)) {
+
+            let objectType: string = this.meshRenderers.get(meshName).getName();
+
+            let boundBox: Bounds;
+            if(objectType == "box")
+            {
+                let boxMax: vec3  = vec3.create();
+                boxMax = [0.5,0.5,0.5];
+                let boxMin: vec3  = vec3.create();
+                boxMin = [-0.5,-0.5,-0.5];
+
+                let min: vec3 = vec3.create();
+                let max: vec3 = vec3.create();
+                // Min and Max of the box in view coordinates
+                min = vec3.transformMat4(min, boxMin, modelView);
+                max = vec3.transformMat4(max, boxMax, modelView);
+
+                boundBox = new Bounds(min, max);
+
+                //console.log("BoxBounds Min: " + boundBox.min[0], boundBox.min[1], boundBox.min[2]);
+                //console.log("BoxBounds Max: " + boundBox.max[0], boundBox.max[1], boundBox.max[2]);
+            }
+
+            if(objectType == "sphere")
+            {
+                let sphereC: vec3 = vec3.create(); 
+                sphereC = [0,0,0];
+                let sphereR: number = 1;
+
+                let center: vec3 = vec3.create();
+                center = vec3.transformMat4(center, sphereC, modelView);
+                let radius: number = info.radius;
+
+                let min: vec3 = [center[0] - radius, center[1] - radius, center[2] - radius];
+                let max: vec3 = [center[0] + radius, center[1] + radius, center[2] + radius];
+                
+                boundBox = new Bounds(min, max);
+
+                //console.log("SphereBounds Min: " + boundBox.min[0], boundBox.min[1], boundBox.min[2]);
+                //console.log("SphereBounds Max: " + boundBox.max[0], boundBox.max[1], boundBox.max[2]);
+            }
+
+            return boundBox;
+        }
     }
 
     private sendLightsToShader(lights: Light[]): void {

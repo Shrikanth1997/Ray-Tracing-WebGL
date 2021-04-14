@@ -95,6 +95,13 @@ export class Scenegraph<VertexType extends IVertexData> {
         }
     }
 
+    public BVH(modelView: Stack<mat4>): void
+    {
+        if ((this.root != null) && (this.renderer != null)) {
+            this.renderer.BVH(this.root, modelView);
+        }
+    }
+
     public getLights(modelView: Stack<mat4>): Light[]{
         return this.renderer.getLights(this.root, modelView);
     }
@@ -107,7 +114,6 @@ export class Scenegraph<VertexType extends IVertexData> {
         }
         return [isHit1, hitr];
     }
-
 
     public addPolygonMesh(meshName: string, mesh: Mesh.PolygonMesh<VertexType>): void {
         this.meshes.set(meshName, mesh);

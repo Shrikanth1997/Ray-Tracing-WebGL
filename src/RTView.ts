@@ -112,6 +112,8 @@ export class RTView {
             }*/
 
             let lights: Light[] = this.scenegraph.getLights(this.modelview);
+            this.scenegraph.BVH(this.modelview);
+
             //console.log("Lights: " + lights[0].getAmbient());
 
             for(let y: number =0;y<=H;y=y+1){
@@ -213,7 +215,7 @@ export class RTView {
                 nDotL = vec3.dot(normalView,lightVec);
 
         
-                viewVec = [-fPosition[0],-fPosition[1],-fPosition[2],];
+                viewVec = [-fPosition[0],-fPosition[1],-fPosition[2]];
                 viewVec = vec3.normalize(viewVec,viewVec);
         
                 // Should be calculated like this
