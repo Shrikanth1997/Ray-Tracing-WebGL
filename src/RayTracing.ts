@@ -240,7 +240,7 @@ export class Scene{
                     "transform": [
                         {
                             "translate": [
-                              30.0,
+                              0.0,
                               0.0,
                               30.0
                             ]
@@ -294,16 +294,16 @@ export class Scene{
                     "transform": [
                         {
                             "translate": [
-                              20.0,
-                              -10.0,
+                              0.0,
+                              -40.0,
                               15.0
                             ]
                         },
                         {
                             "scale": [
-                                15,
-                                15,
-                                15
+                                50,
+                                40,
+                                40
                             ]
                         }
                     ],
@@ -350,9 +350,9 @@ export class Scene{
                     "transform": [
                         {
                             "translate": [
-                              0.0,
-                              0.0,
-                              0.0
+                              -10.0,
+                              -10.0,
+                              -10.0
                             ]
                         },
                         {
@@ -371,6 +371,185 @@ export class Scene{
                                 0.1,
                                 0.8,
                                 0.8,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                },
+
+
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              -10.0,
+                              -5,
+                              10.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                10,
+                                10,
+                                10
+                            ]
+                        },
+                        {
+                            "rotate": [
+                                -10,
+                                1.0,
+                                0.0,
+                                0.0
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "box",
+                        "texture" : "white",
+                        "material": {
+                            "ambient": [
+                                0.8,
+                                0.8,
+                                0.3,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                },
+
+
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              10.0,
+                              -15,
+                              10.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                3,
+                                3,
+                                3
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "sphere",
+                        "texture" : "white",
+                        "material": {
+                            "ambient": [
+                                0.2,
+                                0.8,
+                                0.2,
+                                1.0
+                            ],
+                            "diffuse": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "specular": [
+                                0.8,
+                                0.8,
+                                0.8,
+                                1.0
+                            ],
+                            "emission": [
+                                0.0,
+                                0.0,
+                                0.0,
+                                1.0
+                            ],
+                        "shininess": 100.0,
+                        "absorption": 1.0,
+                        "reflection": 0.0,
+                        "transparency": 0.0,
+                        "refractive_index": 0.0
+                        }
+                    }
+                },
+
+
+                {
+                    "type": "transform",
+                    "transform": [
+                        {
+                            "translate": [
+                              7.5,
+                              7.5,
+                              -15.0
+                            ]
+                        },
+                        {
+                            "scale": [
+                                5,
+                                5,
+                                5
+                            ]
+                        }
+                    ],
+                    "child": {
+                        "type": "object",
+                        "instanceof": "box",
+                        "texture" : "white",
+                        "material": {
+                            "ambient": [
+                                0.7,
+                                0.7,
+                                0.7,
                                 1.0
                             ],
                             "diffuse": [

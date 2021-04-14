@@ -82,19 +82,18 @@ export class GroupNode extends SGNode {
             if(hits_temp == true)
             {
                 hits = true;
-                hitr = hitr_temp;
-                /*if(firstHit == true)
+                if(firstHit == true)
                 {
                     hitr = hitr_temp;
                     firstHit = false;
-                }*/
-                /*else{
+                }
+                else{
                     // Choose the closest hit
                     if(hitr_temp.rayT < hitr.rayT)
                     {
                         hitr = hitr_temp;
                     }
-                }*/
+                }
 
             }
         }
