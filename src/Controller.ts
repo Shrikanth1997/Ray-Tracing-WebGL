@@ -25,7 +25,7 @@ export class Controller implements Features {
         let simpleScene = new Scene;
     
         return new Promise<void>((resolve) => {
-          ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createSphere_2())
+          ScenegraphJSONImporter.importJSON(new VertexPNTProducer(), simpleScene.createScene())
             .then((s: Scenegraph<VertexPNT>) => {
               this.raytracerView.check = 10;
               this.raytracerView.scenegraph = s;
@@ -40,8 +40,8 @@ export class Controller implements Features {
             .then(() => {
                 let numLights: number = this.view.getNumLights();
 
-                console.log("view_Scenegraph: " + this.view.scenegraph);
-                console.log("Check if rt works " + this.raytracerView.scenegraph);
+                //console.log("view_Scenegraph: " + this.view.scenegraph);
+                //console.log("Check if rt works " + this.raytracerView.scenegraph);
 
                 if(numLights==0)
                     numLights = 2;

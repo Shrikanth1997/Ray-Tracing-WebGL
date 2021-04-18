@@ -65,7 +65,7 @@ export namespace ScenegraphJSONImporter {
         }
 
         if ("name" in obj) {
-            console.log("Processing: " + obj["name"]);
+            //console.log("Processing: " + obj["name"]);
         }
         switch (obj["type"]) {
             case "transform":
@@ -214,7 +214,7 @@ export namespace ScenegraphJSONImporter {
 
         if ("ambient" in obj) {
             let values: number[] = convertToArray(obj["ambient"]);
-            console.log(values);
+            //console.log(values);
             if (values.length != 4) {
                 throw new Error("4 values needed for ambient");
             }

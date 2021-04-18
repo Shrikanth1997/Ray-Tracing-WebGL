@@ -91,26 +91,7 @@ export class RTView {
 
             let index_r: number = 0;
             let index_c: number = 0;
-            /*for(let j: number = H-1; j >= 0; j--, index_r++)
-            {
-                for(let i: number = 0; i < W; i++, index_c++)
-                {
-                    let x: number = (i / (W - 1)) * W;
-                    let y: number = (j / (H - 1)) * H;
-                    let dir: vec4 = vec4.fromValues((x - W/2), (y - H/2), -focalLen, 0);
-                    
-                    let ray: Ray3D = new Ray3D(origin, dir);
-                    let color: vec3 = this.rayCast(ray, this.modelview);
-
-                    this.imageData.data[4 * (index_r * W + index_c)] = color[0];//Math.random() * 255;
-                    this.imageData.data[4 * (index_r * W + index_c) + 1] = color[1];//Math.random() * 255;
-                    this.imageData.data[4 * (index_r * W + index_c) + 2] = color[2];//Math.random() * 255;
-                    this.imageData.data[4 * (index_r * W + index_c) + 3] = 255;
-
-                    //console.log("COLOR: " + color[0]+color[1]+color[2]);
-                }
-            }*/
-
+            
             let lights: Light[] = this.scenegraph.getLights(this.modelview);
             this.scenegraph.BVH(this.modelview);
             //console.log("Lights: " + lights[0].getAmbient());
@@ -123,7 +104,24 @@ export class RTView {
 
                     let ind_r: number = H-y;
 
-                    let color: vec4 = this.rayCast(ray, this.modelview, lights);
+                    let color: vec4 = vec4.create();
+                    let rayHit: HitRecord;
+                    let isHit: boolean ;
+                    [isHit, rayHit] = this.rayCast(ray, this.modelview);
+
+                    if(isHit==true)
+                    {
+                        //console.log("hit");
+                        let col: vec4 = vec4.scale(vec4.create(),this.RTShader(ray, rayHit, this.modelview, lights),255);
+                        //let col: vec3 = this.shadeColor(rayHit, modelView, lights)
+                        color = [col[0],col[1],col[2],255];
+                        //return [100,50,150, 0];
+                        
+                    }
+                    else{
+                        //console.log("NO hit");
+                        color = [0.9,0.9,0.7,1];
+                    }
 
                     this.imageData.data[4 * (ind_r * W + x)] = color[0];//Math.random() * 255;
                     this.imageData.data[4 * (ind_r * W + x) + 1] = color[1];//Math.random() * 255;
@@ -141,43 +139,122 @@ export class RTView {
         
     }
 
-    public rayCast(ray: Ray3D, modelView: Stack<mat4>, lights: Light[]): vec4
+    public rayCast(ray: Ray3D, modelView: Stack<mat4>): [boolean, HitRecord]
     {
-        let ifHit: boolean;
-        let rayHit: HitRecord;
-
-        
+       
         //console.log("Reached cast " + this.scenegraph);
 
+        let rayHit: HitRecord;
+        let isHit: boolean ;
         if(this.scenegraph != null)
         {
             //console.log("RTView scenegraph is not null " + this.scenegraph.intersect(ray, modelView));
-            let rayHit: HitRecord;
-            let isHit: boolean ;
             [isHit,rayHit] = this.scenegraph.intersect(ray, modelView);
+            return [isHit, rayHit];
             //console.log("Intersection: " + rayHit.intersection);
-            if(isHit==true)
-            {
-                //console.log("hit");
-                let col: vec4 = vec4.scale(vec4.create(),this.shadeColor(ray, rayHit, modelView, lights),255);
-                //let col: vec3 = this.shadeColor(rayHit, modelView, lights)
-                return [col[0],col[1],col[2],255];
-                //return [100,50,150, 0];
-                
-            }
-            else{
-                //console.log("NO hit");
-                return [0,0,0,1];
-            }
         }
 
-        return [0,0,0,1];
+        return [false, rayHit];
     }
 
 
     public reflect(v: vec3, n: vec3): vec3 {    
         return vec3.subtract(vec3.create(), v , vec3.scale(vec3.create(), n, 2*vec3.dot(v,n)));
     }
+
+
+    public RTShader(ray: Ray3D, rayHit: HitRecord, modelview: Stack<mat4>, light: Light[] ): vec4 {
+
+        
+        // Pass in these values
+        let fNormal:vec3 = [rayHit.normalHit[0],rayHit.normalHit[1],rayHit.normalHit[2]];
+        let fPosition_temp:vec4 = vec4.add(vec4.create(), ray.position, vec4.scale(vec4.create(), ray.direction, rayHit.rayT));//[rayHit.intersection[0],rayHit.intersection[1],rayHit.intersection[2]];
+        let fTexCoord:vec3;
+        let fPosition: vec3 = [fPosition_temp[0], fPosition_temp[1], fPosition_temp[2]];
+        
+        //console.log("normals: " + fNormal);
+        
+        let lightVec:vec3 = vec3.create();
+        let lightVec_noNorm:vec3 = vec3.create();
+        let viewVec:vec3= vec3.create();
+        let reflectVec:vec3= vec3.create();
+        let normalView:vec3= vec3.create();
+        let ambient:vec3= vec3.create(),diffuse:vec3= vec3.create(),specular:vec3= vec3.create();
+        let nDotL: number,rDotV: number;
+        
+        
+        let result: vec4 = [0,0,0,1];
+        let numLights: number = light.length;
+        
+
+        for (let i=0;i<numLights;i++)
+        {
+                    
+                lightVec = vec3.normalize(lightVec, vec3.subtract(vec3.create(),[light[i].getPosition()[0], light[i].getPosition()[1], light[i].getPosition()[2]], fPosition));
+                lightVec_noNorm = vec3.subtract(vec3.create(),[light[i].getPosition()[0], light[i].getPosition()[1], light[i].getPosition()[2]], fPosition);
+
+                let shadowHit: HitRecord;
+                let isHit: boolean ;
+                // Create Shadow Ray and call rayCast
+                let offset: vec3 = vec3.create();
+                offset = vec3.scale(offset, lightVec_noNorm, 0.01);
+                let shadowRay: Ray3D = new Ray3D([fPosition[0]+offset[0], fPosition[1]+offset[1], fPosition[2]+offset[2], 1], [lightVec_noNorm[0], lightVec_noNorm[1], lightVec_noNorm[2], 0]);
+                [isHit, shadowHit] = this.rayCast(shadowRay, this.modelview);
+                
+                // If the shadow ray hits any object
+                if(isHit == true)
+                {
+                    console.log("shadow hit: " + shadowHit.rayT);
+                    if(shadowHit.rayT > 0 && shadowHit.rayT < 1)
+                    {
+                        // This point is in shadow
+                        result = vec4.add(result, result, [0, 0, 0, 1]);
+                        continue;  
+                    }
+                }
+        
+                let tNormal: vec3 = fNormal;
+                normalView = vec3.normalize(normalView, [tNormal[0],tNormal[1],tNormal[2]]);
+                nDotL = vec3.dot(normalView,lightVec);
+
+        
+                viewVec = [-fPosition[0],-fPosition[1],-fPosition[2],];
+                viewVec = vec3.normalize(viewVec,viewVec);
+        
+                // Should be calculated like this
+                // I - 2.0 * dot(N, I) * N 
+                reflectVec = this.reflect([-lightVec[0], -lightVec[1], -lightVec[2]] ,normalView);
+                reflectVec = vec3.normalize(reflectVec, reflectVec);
+        
+                rDotV = Math.max(vec3.dot(reflectVec,viewVec),0.0);
+        
+                let spotDirection: vec3 = vec3.normalize(vec3.create(), [light[i].getSpotDirection()[0], light[i].getSpotDirection()[1],light[i].getSpotDirection()[2]]);
+                
+                //console.log("Spots: " + vec3.dot(spotDirection,vec3.negate(lightVec,lightVec)) + " , " + Math.cos(light[i].getSpotCutoff()));
+
+                //if (vec3.dot(spotDirection,vec3.negate(lightVec,lightVec))>Math.cos(glMatrix.toRadian(light[i].getSpotCutoff()))) {
+                    
+                    ambient = vec3.multiply(ambient, rayHit.material.getAmbient(),light[i].getAmbient() );
+                    diffuse = vec3.multiply(diffuse, rayHit.material.getDiffuse(), vec3.mul(vec3.create(), light[i].getDiffuse(),[Math.max(nDotL,0.0),Math.max(nDotL,0.0),Math.max(nDotL,0.0)]));
+                    if (nDotL>0.0)
+                        specular = vec3.multiply(specular, rayHit.material.getSpecular(), vec3.multiply(vec3.create(), light[i].getSpecular() , [Math.pow(rDotV,rayHit.material.getShininess()),Math.pow(rDotV,rayHit.material.getShininess()),Math.pow(rDotV,rayHit.material.getShininess())]));
+                    else
+                        specular = [0,0,0];
+
+
+                    let final: vec3 = [0,0,0];
+                    final = vec3.add(final, final, specular);
+                    final = vec3.add(final, final, diffuse);
+                    final = vec3.add(final, final, ambient);
+                    result = vec4.add(result, result,   [final[0], final[1], final[2],1]);  
+                //}  
+            }
+           
+        
+            return result;
+        
+        }
+
     
     public shadeColor(ray: Ray3D, rayHit: HitRecord, modelview: Stack<mat4>, light: Light[] ): vec4 {
 
@@ -228,7 +305,7 @@ export class RTView {
                 
                 //console.log("Spots: " + vec3.dot(spotDirection,vec3.negate(lightVec,lightVec)) + " , " + Math.cos(light[i].getSpotCutoff()));
 
-                if (vec3.dot(spotDirection,vec3.negate(lightVec,lightVec))>Math.cos(glMatrix.toRadian(light[i].getSpotCutoff()))) {
+                //if (vec3.dot(spotDirection,vec3.negate(lightVec,lightVec))>Math.cos(glMatrix.toRadian(light[i].getSpotCutoff()))) {
                     
                     ambient = vec3.multiply(ambient, rayHit.material.getAmbient(),light[i].getAmbient() );
                     diffuse = vec3.multiply(diffuse, rayHit.material.getDiffuse(), vec3.mul(vec3.create(), light[i].getDiffuse(),[Math.max(nDotL,0.0),Math.max(nDotL,0.0),Math.max(nDotL,0.0)]));
@@ -243,7 +320,7 @@ export class RTView {
                     final = vec3.add(final, final, diffuse);
                     final = vec3.add(final, final, ambient);
                     result = vec4.add(result, result,   [final[0], final[1], final[2],1]);  
-                }  
+                //}  
             }
            
         
@@ -254,3 +331,21 @@ export class RTView {
 
 
 }
+
+
+/*let shadowHit: HitRecord;
+                let isHit: boolean ;
+                // Create Shadow Ray and call rayCast
+                let shadowRay: Ray3D = new Ray3D([fPosition[0], fPosition[1], fPosition[2], 1], [lightVec[0], lightVec[1], lightVec[2], 0]);
+                [isHit, shadowHit] = this.rayCast(shadowRay, this.modelview);
+                
+                // If the shadow ray hits any object
+                if(isHit == true)
+                {
+                    if(shadowHit.rayT > 0 && shadowHit.rayT < 1)
+                    {
+                        // This point is in shadow
+                        result = vec4.add(result, result, [0, 0, 0, 1]);
+                        //continue;  
+                    }
+                }*/

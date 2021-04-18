@@ -103,7 +103,7 @@ export class GroupNode extends SGNode {
             
             [hits_temp,hitr_temp] = this.children[i].intersect(context, ray, modelView, isHit);
             
-            if(hits_temp == true)
+            if(hits_temp == true && hitr_temp.rayT > 0)
             {
                 hits = true;
                 if(firstHit == true)
